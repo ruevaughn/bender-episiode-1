@@ -1,11 +1,4 @@
 module FuturamaLand
-  DIRECTIONS  = {south: 'SOUTH', east: 'EAST', north: 'NORTH', west: 'W'}.freeze
-    
-  SOUTH = FuturamaLand::DIRECTIONS[:south].freeze
-  EAST  = FuturamaLand::DIRECTIONS[:east].freeze
-  NORTH = FuturamaLand::DIRECTIONS[:north].freeze
-  WEST  = FuturamaLand::DIRECTIONS[:west].freeze
-
   class Map
     attr_accessor :rows
     attr_accessor :rows_as_string
@@ -36,11 +29,8 @@ module FuturamaLand
     end
 
     def predict_move
-      scan_direction(@bender.direction)
-    end
-
-    def draw_map
-      puts @map
+      move_direction
+      move_interaction
     end
 
     private
@@ -48,48 +38,133 @@ module FuturamaLand
       @bender.location = location
     end
 
-    def move_direction(direction)
-      case direction
-      when "SOUTH" then move_south if move_south?
-      when "EAST" then move_east   if move_east?
-      when "NORTH" then move_north if move_north?
-      when "WEST" then move_west   if move_west?
+    def move_direction
+      if @booster.inverted
+        move_west  if move_west?
+        move_north if move_north?
+        move_east  if move_east?
+        check_south
+      else
+        check_south
+        move_east  if move_east?
+        move_north if move_north?
+        move_west  if move_west?
+      end
     end
 
-    def move_south?
+    def check_south
       location = @bender.location
-      location[:column_index] -= 1
-      true if check_column(location) == /\w/
+      new_location[:column_index] -= 1
+      
+      move_south if move_south?(new_location)
+      interact_south if interact_south?(location)
+    end
+
+
+    def interact_south?(location)
+      true if check_interact_column(location)
+    end
+
+    def move_south
+      @bender.location[:column_index] -= 1
+      puts "SOUTH"
+    end
+
+    def move_north
+      @bender.location[:column_index] += 1
+      puts "NORTH"
+    end
+
+    def move_east
+      @bender.location[:row_index] += 1
+      puts "EAST"
+    end
+
+    def move_west
+      @bender.location[:row_index] -= 1
+      puts "WEST"
+    end
+
+    def change_direction
+    end
+
+    def move_south?(location)
+      true if check_move_column(location)  
     end
 
     def move_north?
+      location = @bender.location
+      location[:column_index] += 1
+      true if check_move_column(location) == /\w/
     end
     
     def move_east?
+      location = @bender.location
+      location[:row_index] += 1
+      true if check_move_column(location) == /\w/
     end
 
     def move_west?
+      location = @bender.location
+      location[:row_index] -= 1
+      true if check_move_column(location) == /\w/
     end
 
     def check_column(location)
-      object = @rows.first[location[:row_index][location[:column_index]]]
+      column = @rows[location[:row_index]][location[:column_index]]
+    end
 
+    def check_move_column(location)
+      column = check_column
+      if column.match?(/\w/)
+        true
+      elsif column.match('$')
+        @bender.found_booth = true
+        true
+      elsif column.match('x')
+        @bender.breaker_mode ? true : false
+      end
+    end
+
+    def check_interact_column(location)
+      column = check_column(location)
+      if column.match?(/\b/)
+        @bender.breaker_mode == !@bender.breaker_mode
+      elsif column.match('$')
+        @bender.found_booth = true
+        true
+      elsif column.match('x')
+        if @bender.breaker_mode ? true : false
+      elsif column.match('i')
+        @bender.inverted = true
+      end
+    end
+
+    def check_change_direction_column(location)
+      column = check_column(location)
+      if column.match(/\#/)
+        change_direction
+      elsif column.match(/x/)
+        change_direction 
+      elsif column.match('n')
+      elsif column.match('e')
+      elsif column.match('w')
+      elsif column.match('s')
+      end
     end
   end
   
   class Bender
     attr_accessor :direction
     attr_accessor :location
+    attr_accessor :found_booth
+    attr_accessor :breaker_mode
+    attr_accessor :inverted
 
-    DIRECTION = {
-      south: FuturamaWorld::SOUTH, 
-      east: FuturamaWorld::EAST, 
-      north: FuturamaWorld::NORTH, 
-      west: FuturamaWorld::WEST}.freeze
-  }
     def initialize
-      @direction = DIRECTION[:south]
+      @direction = "SOUTH"
       @location = {}
+      @found_booth = false
     end
   end
 end
@@ -108,6 +183,6 @@ end
 # Write an action using puts
 # To debug: STDERR.puts "Debug messages..."
 @map.locate_bender
-@map.predict_move
-
-
+while @bender.found_booth == false
+  puts @map.predict_move
+end
