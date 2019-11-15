@@ -1,4 +1,11 @@
 module FuturamaLand
+  DIRECTIONS  = {south: 'SOUTH', east: 'EAST', north: 'NORTH', west: 'W'}.freeze
+    
+  SOUTH = FuturamaLand::DIRECTIONS[:south].freeze
+  EAST  = FuturamaLand::DIRECTIONS[:east].freeze
+  NORTH = FuturamaLand::DIRECTIONS[:north].freeze
+  WEST  = FuturamaLand::DIRECTIONS[:west].freeze
+
   class Map
     attr_accessor :rows
     attr_accessor :rows_as_string
@@ -28,6 +35,10 @@ module FuturamaLand
       end
     end
 
+    def predict_move
+      scan_direction(@bender.direction)
+    end
+
     def draw_map
       puts @map
     end
@@ -36,14 +47,48 @@ module FuturamaLand
     def set_current_bender_location(location)
       @bender.location = location
     end
+
+    def move_direction(direction)
+      case direction
+      when "SOUTH" then move_south if move_south?
+      when "EAST" then move_east   if move_east?
+      when "NORTH" then move_north if move_north?
+      when "WEST" then move_west   if move_west?
+    end
+
+    def move_south?
+      location = @bender.location
+      location[:column_index] -= 1
+      true if check_column(location) == /\w/
+    end
+
+    def move_north?
+    end
+    
+    def move_east?
+    end
+
+    def move_west?
+    end
+
+    def check_column(location)
+      object = @rows.first[location[:row_index][location[:column_index]]]
+
+    end
   end
   
   class Bender
     attr_accessor :direction
     attr_accessor :location
-    
+
+    DIRECTION = {
+      south: FuturamaWorld::SOUTH, 
+      east: FuturamaWorld::EAST, 
+      north: FuturamaWorld::NORTH, 
+      west: FuturamaWorld::WEST}.freeze
+  }
     def initialize
-      @direction = 'SOUTH'
+      @direction = DIRECTION[:south]
       @location = {}
     end
   end
