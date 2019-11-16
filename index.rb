@@ -24,11 +24,11 @@ module FuturamaLand
 
     module BenderProgrammableLogicFirmware
       def predict_move(object)
-        predict_bender_move if can_move(object)
+        predict_bender_move if can_move?(object)
       end
 
       def can_move?(object)
-        if object == CitMapy::OPEN_SPACE
+        if object == FuturamaLand::CityMap::OPEN_SPACE
         elsif object
         end
       end
@@ -63,19 +63,20 @@ module FuturamaLand
     def get_new_location(direction)
       row_or_column, new_direction = COMPASS_ADVICE[direction]
       if new_direction == :up
-        @location[row_or_column] += 1
+        new_location = @location
+        new_location[row_or_column] += 1
       elsif new_direction == :down
-        @location[row_or_column] -= 1
+        new_location = @location
+        new_location[row_or_column] -= 1
       end
-
-      @location
+      new_location
     end
 
     def look_around
       directions = inverted ? INVERTED_DIRECTIONS : STANDARD_DIRECTIONS
       directions.each do |direction_sym, _ |
         location_to_check = get_new_location(direction_sym)
-        object = @map.find_location(location_to_check)
+        object = @map.object_at_location(location_to_check)
         predict_move(object)
         # For each direction check if can move
         # For each direction check if can interact
@@ -100,10 +101,6 @@ module FuturamaLand
 
     def upload_to_map(row)
       @rows << row.split('')
-    end
-
-    def find_location(location)
-      
     end
 
     def locate_bender
@@ -134,7 +131,6 @@ module FuturamaLand
     def update_map(location, symbol)
       @map[location[:row_index]][location[:column_index]] = symbol
     end
-
   end
 end
 
