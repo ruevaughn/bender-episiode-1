@@ -1,0 +1,9 @@
+inherit_from: .rubocop_todo.yml
+
+
+require:
+  #- rubocop-performance
+AllCops:
+  StyleGuideBaseURL: https://rubystyle.guide
+
+  TargetRubyVersion: 2.6.3

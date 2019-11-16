@@ -1,6 +1,0 @@
-{
-  "ruby.rubocop.useBundler": true,
-  "ruby.useBundler": true,
-  "files.insertFinalNewline": true,
-  "files.trimFinalNewlines": true
-}
