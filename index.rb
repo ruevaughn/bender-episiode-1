@@ -35,21 +35,21 @@ module FuturamaLand
       WEST = CARDINAL_DIRECTIONS[3].freeze
 
       COMPASS_ADVICE = {
-        NORTH => [:column_index, :up],
-        EAST => [:row_index, :up],
-        SOUTH => [:column_index, :down],
-        WEST => [:row_index, :down]
+        NORTH => [:row_index, :up],
+        EAST => [:column, :down],
+        SOUTH => [:row_index, :down],
+        WEST => [:column_index, :up]
       }.freeze
 
       PATH_MODIFIER_CHANGES = { 'N' => NORTH, 'E' => EAST, 'S' => SOUTH, 'W' => WEST }.freeze
 
       STANDARD_DIRECTIONS = { 'SOUTH' => 'S', 'EAST' => 'E', 'NORTH' => 'N', 'WEST' => 'W' }.freeze
       # STANDARD_DIRECTIONS = { 'S' => SOUTH, 'E' => EAST, 'N' => NORTH, 'W' => WEST }.freeze
-      STANDARD_DIRECTIONS_ABBR = %w[SOUTH EAST NORTH WEST]
+      STANDARD_DIRECTIONS_ABBR = %w[SOUTH EAST NORTH WEST].freeze
 
       INVERTED_DIRECTIONS = { 'WEST' => 'W', 'NORTH' => 'N', 'EAST' => 'E', 'SOUTH' => 'S' }.freeze
       # INVERTED_DIRECTIONS = { 'W' => WEST, 'N' => NORTH, 'E' => EAST, 'S' => SOUTH }.freeze
-      INVERTED_DIRECTIONS_ABBR = %w[WEST NORTH EAST SOUTH]
+      INVERTED_DIRECTIONS_ABBR = %w[WEST NORTH EAST SOUTH].freeze
     end
 
     # These firmware updates are aware of the original 'Bender' prototype...
@@ -59,10 +59,13 @@ module FuturamaLand
       def predict_direction
         directions = get_directions
         if @directions_tried.include?(@direction)
-          direction = directions.find { |d| !@directions_tried.include?(d) }
+          direction = directions.find { |d| d unless @directions_tried.include?(d) }
         else
           direction = @direction
         end
+        STDERR.puts "d"*50 
+        STDERR.puts direction
+        STDERR.puts "d"*50 
         direction
       end
 
@@ -123,9 +126,12 @@ module FuturamaLand
     end
 
     def can_move_to_object?
-      can_move = true
-      can_move = false if unbreakable_object(@current_object)
-      can_move
+      can_move = unbreakable_object(@current_object) ? false : true
+      STDERR.puts "*"*50
+      STDERR.puts can_move
+      STDERR.puts @current_object
+      STDERR.puts "*"*50
+  can_move
     end
 
     def move_to_object
