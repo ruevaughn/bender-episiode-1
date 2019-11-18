@@ -15,8 +15,8 @@ module FuturamaLand
       UNBREAKABLE_OBJECT = OBSTACLES['#']
       SUICIDE_BOOTH = OBJECTS['$']
       BEER = OBJECTS['B']
-      INVERTER = OBJECT['I']
-      TELEPORER = OBJECT['T']
+      INVERTER = OBJECTS['I']
+      TELEPORER = OBJECTS['T']
 
       def unbreakable_object(object)
         object == UNBREAKABLE_OBJECT
@@ -37,8 +37,8 @@ module FuturamaLand
       COMPASS_ADVICE = {
         NORTH => [:column_index, :up],
         EAST => [:row_index, :up],
-        SOUTH => [:row_index, :down],
-        WEST => [:column_index, :down]
+        SOUTH => [:column_index, :down],
+        WEST => [:row_index, :down]
       }.freeze
 
       PATH_MODIFIER_CHANGES = { 'N' => NORTH, 'E' => EAST, 'S' => SOUTH, 'W' => WEST }.freeze
@@ -57,37 +57,28 @@ module FuturamaLand
     # Since it gives it the 'adding on' feel which is described in the scenario
     module BenderProgrammableLogicFirmware
       def predict_direction
-        if @direction
+        if @direction 
           direction = @direction
-        elsif @inverted
-          direction = INVERTED_DIRECTIONS.find { |d| @directions_tried.exclude?(d) }
         else
-          direction = STANDARD_DIRECTIONS.find { |d| @directions_tried.exclude?(d) }
+          directions = get_directions
+          direction = directions.find { |d| !@directions_tried.include?(d) }
         end
         @directions_tried << direction
+        direction = 'LOOP' if @directions_tried.size > 4
+          
         direction
       end
+
+      def get_directions
+        @inverted ? CompassLogicGates::INVERTED_DIRECTIONS : CompassLogicGates::STANDARD_DIRECTIONS
+      end
+
 
       def predict_move(object)
         predict_bender_move(object)
         predict_bender_interaction(object)
       end
 
-      def predict_bender_move(object)
-        moved = false
-        DIRECTION_CHANGES.each do |abbr, direction|
-          if object == abbr
-            moved = true
-            @direction = direction
-          end
-        end
-        # elsif @inverted
-        #   INVERTED_DIRECTIONS.each do
-        #   end
-
-        # predict_move_direction(object)
-        # @found_booth = true if object == SUICIDE_BOOTH
-      end
     end
   end
 
@@ -108,6 +99,7 @@ module FuturamaLand
     attr_accessor :breaker_mode
     attr_accessor :inverted
     attr_accessor :direction
+    attr_accessor :directions_tried
     attr_accessor :direction_object
     attr_accessor :map
 
@@ -118,27 +110,25 @@ module FuturamaLand
       @direction = 'SOUTH'
       @directions_tried = []
       @currrent_object = nil
-      @current_direction = nil
       @found_booth = false
       @breaker_mode = false
       @teleport = false
     end
 
-    def get_new_location
+    def new_location
       row_or_column, new_direction = COMPASS_ADVICE[@current_direction]
+      current_location = @location
       if new_direction == :up
-        new_location = @location
-        new_location[row_or_column] += 1
+        current_location[row_or_column] += 1
       elsif new_direction == :down
-        new_location = @location
-        new_location[row_or_column] -= 1
+        current_location[row_or_column] -= 1
       end
-      new_location
+      current_location
     end
 
     def can_move_to_object?
       can_move = false
-      can_move = true unless unbreakable_object(@current_object)
+      can_move = false if unbreakable_object(@current_object)
       can_move = true if breakable_object(@current_object)
       can_move
     end
@@ -158,28 +148,25 @@ module FuturamaLand
       when '$'
         handle_bender_found_suicide_booth
       else
-        STDERR.puts "Unhandled move_to_object"
+        STDERR.puts "Unhandled move_to_object #{@current_object}"
       end
-      move_bender
     end
 
     def wander_around
       @current_direction = predict_direction
-      @current_location = get_new_location
-      object = object_at_location
-      if can_move_to_object?(object)
-        move_to_object(object)
-        direction
+      @current_location = new_location
+      @current_object = @map.object_at_location(@current_location)
+      if @current_direction == 'LOOP'
+        cleanup_state
+        'LOOP'
+      elsif can_move_to_object?
+        move_to_object
+        move_bender
+        cleanup_state
+        @current_direction
       else
-        @change_direction = true
-        predict_move_direction
-        # predict_move(object) if can_move?(object)
-        # directions ||= inverted ? INVERTED_DIRECTIONS : STANDARD_DIRECTIONS
-        # directions.each do |direction_sym, _|
-        # For each direction check if can move
-        # For each direction check if can interact
-        # For each direction check if teleporter
-        # For each direction check if beer
+        @direction = predict_direction
+        wander_around
       end
     end
 
@@ -217,6 +204,14 @@ module FuturamaLand
     def handle_bender_found_suicide_booth
       @found_booth = true
     end
+
+    def cleanup_state
+      @directions_tried = []
+      @current_object = nil
+      @found_booth = false
+      @breaker_mode = false
+      @teleport = false
+    end
   end
 
   # I'm the map i'm the map i'm the map!
@@ -244,7 +239,7 @@ module FuturamaLand
       end
     end
 
-    def get_teleport_location(curent_location)
+    def get_teleport_location(current_location)
       location = nil
       @rows.each_with_index do |row, row_index|
         column_index = row.index('T')
@@ -278,9 +273,9 @@ end
 # Auto-generated code below aims at helping you parse
 # the standard input according to the problem statement.
 
-l, c = gets.split(" ").collect { |x| x.to_i }
+l, c = gets.split(' ').collect { |x| x.to_i }
 @bender = FuturamaLand::Bender.new
-@map = FuturamaLand::City::Map.new(bender: @bender)
+@map = FuturamaLand::CityMap.new(bender: @bender)
 @bender.map = @map
 l.times do
   row = gets.chomp
