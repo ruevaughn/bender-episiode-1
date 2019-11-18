@@ -19,11 +19,11 @@ module FuturamaLand
       TELEPORER = OBJECTS['T']
 
       def unbreakable_object(object)
-        object == UNBREAKABLE_OBJECT
+        (object == '#') || breakable_object(object) 
       end
 
       def breakable_object(object)
-        @breaker_mode && (object == BREAKABLE_OBJECT)
+        @breaker_mode && (object == 'X')
       end
     end
     module CompassLogicGates
@@ -57,28 +57,23 @@ module FuturamaLand
     # Since it gives it the 'adding on' feel which is described in the scenario
     module BenderProgrammableLogicFirmware
       def predict_direction
-        if @direction 
-          direction = @direction
-        else
-          directions = get_directions
+        directions = get_directions
+        if @directions_tried.include?(@direction)
           direction = directions.find { |d| !@directions_tried.include?(d) }
+        else
+          direction = @direction
         end
-        @directions_tried << direction
-        direction = 'LOOP' if @directions_tried.size > 4
-          
         direction
       end
 
       def get_directions
-        @inverted ? CompassLogicGates::INVERTED_DIRECTIONS : CompassLogicGates::STANDARD_DIRECTIONS
+        @inverted ? CompassLogicGates::INVERTED_DIRECTIONS_ABBR : CompassLogicGates::STANDARD_DIRECTIONS_ABBR
       end
-
 
       def predict_move(object)
         predict_bender_move(object)
         predict_bender_interaction(object)
       end
-
     end
   end
 
@@ -101,6 +96,7 @@ module FuturamaLand
     attr_accessor :direction
     attr_accessor :directions_tried
     attr_accessor :direction_object
+    attr_accessor :current_object
     attr_accessor :map
 
     include FuturamaLand::FirmwareUpdate
@@ -109,7 +105,7 @@ module FuturamaLand
       @location = {}
       @direction = 'SOUTH'
       @directions_tried = []
-      @currrent_object = nil
+      @current_object = nil
       @found_booth = false
       @breaker_mode = false
       @teleport = false
@@ -119,36 +115,27 @@ module FuturamaLand
       row_or_column, new_direction = COMPASS_ADVICE[@current_direction]
       current_location = @location
       if new_direction == :up
-        current_location[row_or_column] += 1
-      elsif new_direction == :down
         current_location[row_or_column] -= 1
+      elsif new_direction == :down
+        current_location[row_or_column] += 1
       end
-      current_location
+      @current_location = current_location
     end
 
     def can_move_to_object?
-      can_move = false
+      can_move = true
       can_move = false if unbreakable_object(@current_object)
-      can_move = true if breakable_object(@current_object)
       can_move
     end
 
     def move_to_object
       case @current_object
-      when /(N|E|S|W)/
-        handle_path_modifier
-      when /B/i
-        handle_bender_rationalization
-      when /I/i
-        handle_bender_inverted
-      when /T/i
-        handle_bender_teleport_mode
-      when /X/
-        handle_bender_smashin
-      when '$'
-        handle_bender_found_suicide_booth
-      else
-        STDERR.puts "Unhandled move_to_object #{@current_object}"
+      when /(N|E|S|W)/ then handle_path_modifier
+      when 'B' then handle_bender_rationalization
+      when 'I' then handle_bender_inverted
+      when 'T' then handle_bender_teleport_mode
+      when 'X' then handle_bender_smashin
+      when '$' then handle_bender_found_suicide_booth
       end
     end
 
@@ -156,16 +143,18 @@ module FuturamaLand
       @current_direction = predict_direction
       @current_location = new_location
       @current_object = @map.object_at_location(@current_location)
-      if @current_direction == 'LOOP'
+      if @directions_tried.size > 4
         cleanup_state
         'LOOP'
       elsif can_move_to_object?
         move_to_object
         move_bender
+        update_bender_on_map
         cleanup_state
-        @current_direction
+        @direction = @current_direction
+        @direction
       else
-        @direction = predict_direction
+        @directions_tried << @current_direction
         wander_around
       end
     end
@@ -178,11 +167,14 @@ module FuturamaLand
       else
         @location = @current_location
       end
-      @map.mark_bender_on_map(@location)
     end
 
     def handle_path_modifier
       @direction = PATH_MODIFIER_CHANGES[@current_object]
+    end
+
+    def update_bender_on_map
+      @map.move_bender_on_map(@location)
     end
 
     def handle_bender_rationalization
@@ -207,6 +199,7 @@ module FuturamaLand
 
     def cleanup_state
       @directions_tried = []
+      @current_location = nil
       @current_object = nil
       @found_booth = false
       @breaker_mode = false
@@ -260,12 +253,16 @@ module FuturamaLand
       @bender.location = location
     end
 
+    def move_bender_on_map(current_location)
+      update_map(current_location, '@')
+    end
+
     def bender_smash_obstacle(current_location)
       update_map(current_location, ' ')
     end
 
     def update_map(location, symbol)
-      @map[location[:row_index]][location[:column_index]] = symbol
+      @rows[location[:row_index]][location[:column_index]] = symbol
     end
   end
 end
