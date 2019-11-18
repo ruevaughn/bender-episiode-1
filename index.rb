@@ -42,7 +42,7 @@ module FuturamaLand
         WEST =>  [:column_index, :down]
       }.freeze
 
-      DIRECTION_CHANGES = { 'N' => NORTH, 'E' => EAST, 'S' => SOUTH, 'W' => WEST }.freeze
+      PATH_MODIFIER_CHANGES = { 'N' => NORTH, 'E' => EAST, 'S' => SOUTH, 'W' => WEST }.freeze
 
       STANDARD_DIRECTIONS = { 'SOUTH' => 'S', 'EAST' => 'E', 'NORTH' => 'N', 'WEST' => 'W' }.freeze
       # STANDARD_DIRECTIONS = { 'S' => SOUTH, 'E' => EAST, 'N' => NORTH, 'W' => WEST }.freeze
@@ -110,6 +110,7 @@ module FuturamaLand
     attr_accessor :breaker_mode
     attr_accessor :inverted
     attr_accessor :direction
+    attr_accessor :direction_object
     attr_accessor :map
 
     include FuturamaLand::FirmwareUpdate
@@ -118,12 +119,14 @@ module FuturamaLand
       @location = {}
       @direction = 'SOUTH'
       @directions_tried = []
+      @currrent_object = nil
+      @current_direction = nil
       @found_booth = false
       @breaker_mode = false
     end
 
-    def get_new_location(direction)
-      row_or_column, new_direction = COMPASS_ADVICE[direction]
+    def get_new_location
+      row_or_column, new_direction = COMPASS_ADVICE[@current_direction]
       if new_direction == :up
         new_location = @location
         new_location[row_or_column] += 1
@@ -134,32 +137,32 @@ module FuturamaLand
       new_location
     end
 
-    def can_move_past_object?(object)
+    def can_move_to_object?
       can_move = false
-      can_move = true unless unbreakable_object(object)
-      can_move = true if breakable_object(object) 
+      can_move = true unless unbreakable_object(@current_object)
+      can_move = true if breakable_object(@current_object)
       can_move
     end
 
-    def can_interact?(object)
-      if @breaker_mode && (object == BREAKABLE_OBJECT)
-        true
-      elsif object == TELEPORTER
-        true
-      elsif object == BEER
-        true
-      elsif object == INVERTER
-        true
+    def move_to_object
+      case @current_object
+      when /(N|E|S|W)/
+        handle_path_modifier
+      when /B/i
+        handle_bender_smashin
+      when /I/i
+        handle_bender_inverted
       else
-        false
       end
+      move_bender
     end
 
     def wander_around
-      direction = predict_direction
-      location = get_new_location(direction)
-      object = object_at_location(location)
-      if can_move_past_object?(object)
+      @current_direction = predict_direction
+      @current_location = get_new_location
+      object = object_at_location
+      if can_move_to_object?(object)
+        move_to_object(object)
       else
         object = object_at_location(location)
         # predict_move(object) if can_move?(object)
@@ -171,6 +174,26 @@ module FuturamaLand
           # For each direction check if beer
       end
     end
+    private
+
+    def move_bender
+      @location = @current_location
+      @map.mark_bender_on_map
+    end
+    
+    def handle_path_modifier
+      @direction = PATH_MODIFIER_CHANGES[@current_object]
+    end
+
+    def handle_bender_smashin
+      @breaker_mode = true
+    end
+
+    def handle_bender_inverted
+      @inverted = true
+    end
+
+
   end
 
   # I'm the map i'm the map i'm the map!
@@ -202,12 +225,11 @@ module FuturamaLand
       @rows[location[:row_index]][location[:column_index]]
     end
 
-    private
-
     def mark_bender_on_map(location)
       @bender.location = location
     end
 
+    private
     # When smashing
     def update_map(location, symbol)
       @map[location[:row_index]][location[:column_index]] = symbol
