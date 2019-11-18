@@ -2,9 +2,9 @@
 
 # Welcome to Futurama!
 module FuturamaLand
-   # Benders new firmware to be compiled - the writer of this firmware assumes
-    # bender is already self aware of Bender, and calling methods accordingly.
-    # He hasn't taken this approach with modules before but is seeing how it goes
+  # Benders new firmware to be compiled - the writer of this firmware assumes
+  # bender is already self aware of Bender, and calling methods accordingly.
+  # He hasn't taken this approach with modules before but is seeing how it goes
   module NewBenderFirmware
     # Mostly 'concepts', 'objects', and 'things' about the city Bender needs to know
     module CityLogicGates
@@ -27,7 +27,6 @@ module FuturamaLand
       end
     end
     module CompassLogicGates
-
       CARDINAL_DIRECTIONS = %w[NORTH EAST SOUTH WEST].freeze
       CARDINAL_ABBR = %w[N E S W].freeze
       NORTH = CARDINAL_DIRECTIONS[0].freeze
@@ -37,9 +36,9 @@ module FuturamaLand
 
       COMPASS_ADVICE = {
         NORTH => [:column_index, :up],
-        EAST =>  [:row_index, :up],
+        EAST => [:row_index, :up],
         SOUTH => [:row_index, :down],
-        WEST =>  [:column_index, :down]
+        WEST => [:column_index, :down]
       }.freeze
 
       PATH_MODIFIER_CHANGES = { 'N' => NORTH, 'E' => EAST, 'S' => SOUTH, 'W' => WEST }.freeze
@@ -51,7 +50,6 @@ module FuturamaLand
       INVERTED_DIRECTIONS = { 'WEST' => 'W', 'NORTH' => 'N', 'EAST' => 'E', 'SOUTH' => 'S' }.freeze
       # INVERTED_DIRECTIONS = { 'W' => WEST, 'N' => NORTH, 'E' => EAST, 'S' => SOUTH }.freeze
       INVERTED_DIRECTIONS_ABBR = %w[WEST NORTH EAST SOUTH]
-
     end
 
     # These firmware updates are aware of the original 'Bender' prototype...
@@ -123,6 +121,7 @@ module FuturamaLand
       @current_direction = nil
       @found_booth = false
       @breaker_mode = false
+      @teleport = false
     end
 
     def get_new_location
@@ -149,10 +148,17 @@ module FuturamaLand
       when /(N|E|S|W)/
         handle_path_modifier
       when /B/i
-        handle_bender_smashin
+        handle_bender_rationalization
       when /I/i
         handle_bender_inverted
+      when /T/i
+        handle_bender_teleport_mode
+      when /X/
+        handle_bender_smashin
+      when '$'
+        handle_bender_found_suicide_booth
       else
+        STDERR.puts "Unhandled move_to_object"
       end
       move_bender
     end
@@ -163,37 +169,54 @@ module FuturamaLand
       object = object_at_location
       if can_move_to_object?(object)
         move_to_object(object)
+        direction
       else
-        object = object_at_location(location)
+        @change_direction = true
+        predict_move_direction
         # predict_move(object) if can_move?(object)
         # directions ||= inverted ? INVERTED_DIRECTIONS : STANDARD_DIRECTIONS
         # directions.each do |direction_sym, _|
-          # For each direction check if can move
-          # For each direction check if can interact
-          # For each direction check if teleporter
-          # For each direction check if beer
+        # For each direction check if can move
+        # For each direction check if can interact
+        # For each direction check if teleporter
+        # For each direction check if beer
       end
     end
+
     private
 
     def move_bender
-      @location = @current_location
-      @map.mark_bender_on_map
+      if @teleport
+        @location = @map.get_teleport_location(@current_location)
+      else
+        @location = @current_location
+      end
+      @map.mark_bender_on_map(@location)
     end
-    
+
     def handle_path_modifier
       @direction = PATH_MODIFIER_CHANGES[@current_object]
     end
 
-    def handle_bender_smashin
+    def handle_bender_rationalization
       @breaker_mode = true
+    end
+
+    def handle_bender_smashin
+      @map.bender_smash_obstacle(@current_location)
     end
 
     def handle_bender_inverted
       @inverted = true
     end
 
+    def handle_bender_teleport_mode
+      @teleport = true
+    end
 
+    def handle_bender_found_suicide_booth
+      @found_booth = true
+    end
   end
 
   # I'm the map i'm the map i'm the map!
@@ -221,6 +244,19 @@ module FuturamaLand
       end
     end
 
+    def get_teleport_location(curent_location)
+      location = nil
+      @rows.each_with_index do |row, row_index|
+        column_index = row.index('T')
+        if column_index
+          found_location = { row_index: row_index, column_index: column_index }
+          location = found_location unless current_location == found_location
+        end
+        break if location
+      end
+      location
+    end
+
     def object_at_location(location)
       @rows[location[:row_index]][location[:column_index]]
     end
@@ -229,8 +265,10 @@ module FuturamaLand
       @bender.location = location
     end
 
-    private
-    # When smashing
+    def bender_smash_obstacle(current_location)
+      update_map(current_location, ' ')
+    end
+
     def update_map(location, symbol)
       @map[location[:row_index]][location[:column_index]] = symbol
     end
