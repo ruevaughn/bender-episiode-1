@@ -114,7 +114,7 @@ module FuturamaLand
 
     def new_location
       row_or_column, new_direction = COMPASS_ADVICE[@current_direction]
-      current_location = @location
+      current_location = @location.dup
       if new_direction == :up
         current_location[row_or_column] += 1
       elsif new_direction == :down
@@ -127,35 +127,19 @@ module FuturamaLand
       !(unbreakable_object(@current_object) || breakable_object(@current_object))
     end
 
-    def move_to_object
-      case @current_object
-      when /(N|E|S|W)/ then handle_path_modifier
-      when 'B' then handle_bender_rationalization
-      when 'I' then handle_bender_inverted
-      when 'T' then handle_bender_teleport_mode
-      when 'X' then handle_bender_smashin
-      when '$' then handle_bender_found_suicide_booth
-      end
-    end
+   
 
     def wander_around
-      @count += 1
       @current_direction = predict_direction
-      STDERR.puts "direction#{@count}) #{@current_direction}"
-
       @current_location = new_location
-      STDERR.puts "direction#{@count}) #{@current_direction}"
-      # Right here should be hitting wall and turning east, instead its displaying ... and ject @
       @current_object = @map.object_at_location(@current_location)
-      STDERR.puts "object #{@count}) #{@current_object}"
       # if @directions_tried.size > 4
       #   cleanup_state
       #   'LOOP'
-      STDERR.puts "#{@count}) Can move to object? - #{can_move_to_object?}"
 
       if can_move_to_object?
         move_to_object
-        move_bender
+        @location = move_bender
         update_bender_on_map
         cleanup_state
         @direction = @current_direction
@@ -168,11 +152,22 @@ module FuturamaLand
 
     private
 
+    def move_to_object
+      case @current_object
+      when /(N|E|S|W)/ then handle_path_modifier
+      when 'B' then handle_bender_rationalization
+      when 'I' then handle_bender_inverted
+      when 'T' then handle_bender_teleport_mode
+      when 'X' then handle_bender_smashin
+      when '$' then handle_bender_found_suicide_booth
+      end
+    end
+
     def move_bender
       if @teleport
-        @location = @map.get_teleport_location(@current_location)
+        @map.get_teleport_location(@current_location)
       else
-        @location = @current_location
+        @current_location
       end
     end
 
@@ -296,6 +291,4 @@ end
 # Write an action using puts
 # To debug: STDERR.puts "Debug messages..."
 @map.locate_bender
-while @bender.found_booth == false
-  puts @bender.wander_around
-end
+puts @bender.wander_around until @bender.found_booth == true
