@@ -36,17 +36,39 @@ module FuturamaLand
     # Since it gives it the 'adding on' feel which is described in the scenario
     module BenderProgrammableLogicFirmware
       def predict_direction
-        directions = get_directions
+        directions = decide_directions
         if @directions_tried.include?(@direction)
-          direction = directions.find { |d| d unless @directions_tried.include?(d) }
+          # STDERR.puts "@direction: #{@direction}"
+          # STDERR.puts "@directions_tried: #{@directions_tried}"
+          directions.find { |d| d unless @directions_tried.include?(d) }
         else
-          direction = @direction
+          @direction
         end
-        direction
       end
 
-      def get_directions
-        @inverted ? CompassLogicGates::INVERTED_DIRECTIONS_ABBR : CompassLogicGates::STANDARD_DIRECTIONS_ABBR
+      def decide_directions
+        if @inverted
+          CompassLogicGates::INVERTED_DIRECTIONS_ABBR
+        else
+          CompassLogicGates::STANDARD_DIRECTIONS_ABBR
+        end
+      end
+
+      def new_location
+        current_location = @location.dup
+        if @current_direction == 'NORTH'
+          current_location[:row_index] -= 1
+        elsif @current_direction == 'EAST'
+          current_location[:column_index] += 1
+        elsif @current_direction == 'SOUTH'
+          current_location[:row_index] += 1
+        elsif @current_direction == 'WEST'
+          current_location[:column_index] -= 1
+        end
+          # STDERR.puts "*"*30
+          # STDERR.puts "#{current_location}"
+          # STDERR.puts "*"*30
+        current_location
       end
 
       def predict_move(object)
@@ -95,18 +117,21 @@ module FuturamaLand
 
 
     def wander_around
+      @count += 1
+      # STDERR.puts "direction #{@count}: #{@direction}"
       @current_direction = predict_direction
-      STDERR.puts "current_direction: #{@current_direction}"
+      # STDERR.puts "current_direction #{@count}: #{@current_direction}"
       @current_location = new_location
-      STDERR.puts "current_location #{@current_location}"
+      # STDERR.puts "current_location #{@count}: #{@current_location}"
       @current_object = @map.object_at_location(@current_location)
-      STDERR.puts "current_object #{@current_object}"
+      # STDERR.puts "current_object #{@count}: #{@current_object}"
+      # STDERR.puts can_move_to_object?
       if @directions_tried.size > 4
         @looping = true
-        @lonely_road = 'LOOP'
+        @lonely_road = ['LOOP']
       elsif can_move_to_object?
         move_to_object
-        @location = move_bender
+        move_bender
         update_bender_on_map
         cleanup_state
         finish_taking_lonely_step
@@ -118,28 +143,22 @@ module FuturamaLand
 
     private
 
-    def new_location
-      row_or_column, new_direction = COMPASS_ADVICE[@current_direction]
-      current_location = @location.dup
-      if new_direction == :up
-        current_location[row_or_column] += 1
-      elsif new_direction == :down
-        current_location[row_or_column] -= 1
-      end
-      current_location
-    end
-
     def can_move_to_object?
-      passable = true
-      passable = false if impassable_object? 
-      passable = false unless can_smash?
-      passable
+      # STDERR.puts("impassable_object?: #{impassable_object?}")
+      # STDERR.puts("cannot_smash?: #{cannot_smash?}")
+      if impassable_object?
+        false
+      elsif cannot_smash?
+        false
+      else
+        true
+      end
     end
 
     def move_to_object
       case @current_object
       when /(N|E|S|W)/i then handle_path_modifier
-      when /X/i then handle_bender_smashin if can_smash?
+      when /X/i then handle_bender_smashin unless cannot_smash?
       when /\$/ then handle_bender_found_suicide_booth
       when /I/i then handle_bender_inverted
       when /T/i then handle_bender_teleport_mode
@@ -148,11 +167,15 @@ module FuturamaLand
     end
 
     def impassable_object?
-      @current_object == '#'
+      @current_object && @current_object == '#'
     end
 
-    def can_smash?
-      @breaker_mode == true && @current_object == /X/i
+    def cannot_smash?
+      if @current_object && @current_object == 'X'
+        true if @breaker_mode == true
+      else
+        false
+      end
     end
 
     def finish_taking_lonely_step
@@ -162,9 +185,9 @@ module FuturamaLand
 
     def move_bender
       if @teleport
-        @map.get_teleport_location(@current_location)
+        @location = @map.get_teleport_location(@current_location)
       else
-        @current_location
+        @location = @current_location
       end
     end
 
@@ -198,8 +221,6 @@ module FuturamaLand
 
     def cleanup_state
       @directions_tried = []
-      @current_location = nil
-      @current_object = nil
       @breaker_mode = false
       @teleport = false
     end
@@ -230,6 +251,7 @@ module FuturamaLand
         if column_index
           location = { row_index: row_index, column_index: column_index }
           mark_bender_on_map(bender, location)
+          STDERR.puts "Bender located at #{location}"
         end
         break if column_index
       end
@@ -270,13 +292,13 @@ module FuturamaLand
       @rows[location[:row_index]][location[:column_index]] = symbol
     end
   end
- 
+
   # Good news everyone! We can get started!
-  # Thank Goodness Leela knows what she's doing. 
+  # Thank Goodness Leela knows what she's doing.
   # 'If we're going to save bender we have to start somewhere...' thinks Fry
-  # 'Oh! I know! Let's start with using this logic we've given and 
-  # put it in his head! Ha! as if he had an logic to begin with... 
-  # stupid robot.' 
+  # 'Oh! I know! Let's start with using this logic we've given and
+  # put it in his head! Ha! as if he had an logic to begin with...
+  # stupid robot.'
   # -  Fry Trying to Act Like He Doesn't Care - though deep down he's worried
   #    for his friend.
   module OperationStopSuicideNation
