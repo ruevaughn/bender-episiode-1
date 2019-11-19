@@ -96,8 +96,11 @@ module FuturamaLand
 
     def wander_around
       @current_direction = predict_direction
+      STDERR.puts "current_direction: #{@current_direction}"
       @current_location = new_location
+      STDERR.puts "current_location #{@current_location}"
       @current_object = @map.object_at_location(@current_location)
+      STDERR.puts "current_object #{@current_object}"
       if @directions_tried.size > 4
         @looping = true
         @lonely_road = 'LOOP'
@@ -127,24 +130,34 @@ module FuturamaLand
     end
 
     def can_move_to_object?
-      !(unbreakable_object(@current_object) || breakable_object(@current_object))
+      passable = true
+      passable = false if impassable_object? 
+      passable = false unless can_smash?
+      passable
+    end
+
+    def move_to_object
+      case @current_object
+      when /(N|E|S|W)/i then handle_path_modifier
+      when /X/i then handle_bender_smashin if can_smash?
+      when /\$/ then handle_bender_found_suicide_booth
+      when /I/i then handle_bender_inverted
+      when /T/i then handle_bender_teleport_mode
+      when /B/i then handle_bender_rationalization
+      end
+    end
+
+    def impassable_object?
+      @current_object == '#'
+    end
+
+    def can_smash?
+      @breaker_mode == true && @current_object == /X/i
     end
 
     def finish_taking_lonely_step
       @direction = @current_direction
       @lonely_road << @direction
-    end
-
-
-    def move_to_object
-      case @current_object
-      when /(N|E|S|W)/ then handle_path_modifier
-      when 'B' then handle_bender_rationalization
-      when 'I' then handle_bender_inverted
-      when 'T' then handle_bender_teleport_mode
-      when 'X' then handle_bender_smashin
-      when '$' then handle_bender_found_suicide_booth
-      end
     end
 
     def move_bender
@@ -287,7 +300,7 @@ module FuturamaLand
       # To debug: STDERR.puts "Debug messages..."
       @map.locate_bender(@bender)
       @looping = false
-      @bender.wander_around until (@bender.found_booth || @looping)
+      @bender.wander_around until @bender.found_booth || @looping
       @bender.lonely_road.each { |lonely_step| puts lonely_step }
     end
   end
