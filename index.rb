@@ -98,10 +98,11 @@ module FuturamaLand
     attr_accessor :direction_object
     attr_accessor :current_object
     attr_accessor :map
+    attr_accessor :lonely_road
 
     include FuturamaLand::FirmwareUpdate
 
-    def initialize
+    def initialize(map)
       @location = {}
       @direction = 'SOUTH'
       @directions_tried = []
@@ -109,8 +110,32 @@ module FuturamaLand
       @found_booth = false
       @breaker_mode = false
       @teleport = false
+      @lonely_road = []
       @count = 0
+      @map = map
     end
+
+
+    def wander_around
+      @current_direction = predict_direction
+      @current_location = new_location
+      @current_object = @map.object_at_location(@current_location)
+      if @directions_tried.size > 4
+        @looping = true
+        @lonely_road = 'LOOP'
+      elsif can_move_to_object?
+        move_to_object
+        @location = move_bender
+        update_bender_on_map
+        cleanup_state
+        finish_taking_lonely_step
+      else
+        @directions_tried << @current_direction
+        wander_around
+      end
+    end
+
+    private
 
     def new_location
       row_or_column, new_direction = COMPASS_ADVICE[@current_direction]
@@ -127,30 +152,11 @@ module FuturamaLand
       !(unbreakable_object(@current_object) || breakable_object(@current_object))
     end
 
-   
-
-    def wander_around
-      @current_direction = predict_direction
-      @current_location = new_location
-      @current_object = @map.object_at_location(@current_location)
-      # if @directions_tried.size > 4
-      #   cleanup_state
-      #   'LOOP'
-
-      if can_move_to_object?
-        move_to_object
-        @location = move_bender
-        update_bender_on_map
-        cleanup_state
-        @direction = @current_direction
-        @direction
-      else
-        @directions_tried << @current_direction
-        wander_around
-      end
+    def finish_taking_lonely_step
+      @direction = @current_direction
+      @lonely_road << @direction
     end
 
-    private
 
     def move_to_object
       case @current_object
@@ -203,7 +209,6 @@ module FuturamaLand
       @directions_tried = []
       @current_location = nil
       @current_object = nil
-      @found_booth = false
       @breaker_mode = false
       @teleport = false
     end
@@ -216,7 +221,6 @@ module FuturamaLand
 
     def initialize(attrs = {})
       @rows = []
-      @bender = attrs[:bender]
     end
 
     def upload_to_map(row)
@@ -229,12 +233,12 @@ module FuturamaLand
       end
     end
 
-    def locate_bender
+    def locate_bender(bender)
       @rows.each_with_index do |row, row_index|
         column_index = row.index('@')
         if column_index
           location = { row_index: row_index, column_index: column_index }
-          mark_bender_on_map(location)
+          mark_bender_on_map(bender, location)
         end
         break if column_index
       end
@@ -258,7 +262,8 @@ module FuturamaLand
       @rows[location[:row_index]][location[:column_index]]
     end
 
-    def mark_bender_on_map(location)
+    def mark_bender_on_map(bender, location)
+      @bender = bender
       @bender.location = location
     end
 
@@ -274,21 +279,42 @@ module FuturamaLand
       @rows[location[:row_index]][location[:column_index]] = symbol
     end
   end
+ 
+  # Good news everyone! We can get started!
+  # Thank Goodness Leela knows what she's doing. 
+  # 'If we're going to save bender we have to start somewhere...' thinks Fry
+  # 'Oh! I know! Let's start with using this logic we've given and 
+  # put it in his head! Ha! as if he had an logic to begin with... 
+  # stupid robot.' 
+  # -  Fry Trying to Act Like He Doesn't Care - though deep down he's worried
+  #    for his friend.
+  module OperationStopSuicideNation
+    def self.download_map
+      # Auto-generated code below aims at helping you parse
+      # the standard input according to the problem statement.
+      l, c = gets.split(' ').collect { |x| x.to_i }
+      @map = FuturamaLand::CityMap.new(bender: @bender)
+      l.times do
+        row = gets.chomp
+        @map.upload_to_map(row)
+      end
+    end
+
+    def self.upload_firmware
+      @bender = FuturamaLand::Bender.new(@map)
+    end
+
+    def self.save_bender
+      # Write an action using puts
+      # To debug: STDERR.puts "Debug messages..."
+      @map.locate_bender(@bender)
+      @looping = false
+      @bender.wander_around until (@bender.found_booth || @looping)
+      @bender.lonely_road.each { |lonely_step| puts lonely_step }
+    end
+  end
 end
 
-# Auto-generated code below aims at helping you parse
-# the standard input according to the problem statement.
-
-l, c = gets.split(' ').collect { |x| x.to_i }
-@bender = FuturamaLand::Bender.new
-@map = FuturamaLand::CityMap.new(bender: @bender)
-@bender.map = @map
-l.times do
-  row = gets.chomp
-  @map.upload_to_map(row)
-end
-
-# Write an action using puts
-# To debug: STDERR.puts "Debug messages..."
-@map.locate_bender
-puts @bender.wander_around until @bender.found_booth == true
+FuturamaLand::OperationStopSuicideNation.download_map
+FuturamaLand::OperationStopSuicideNation.upload_firmware
+FuturamaLand::OperationStopSuicideNation.save_bender
