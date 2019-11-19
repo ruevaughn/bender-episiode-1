@@ -19,7 +19,7 @@ module FuturamaLand
       TELEPORER = OBJECTS['T']
 
       def unbreakable_object(object)
-        (object == '#') || breakable_object(object) 
+        object == '#' ? true : false
       end
 
       def breakable_object(object)
@@ -35,10 +35,10 @@ module FuturamaLand
       WEST = CARDINAL_DIRECTIONS[3].freeze
 
       COMPASS_ADVICE = {
-        NORTH => [:row_index, :up],
-        EAST => [:column, :down],
-        SOUTH => [:row_index, :down],
-        WEST => [:column_index, :up]
+        NORTH => [:row_index, :down],
+        EAST => [:column_index, :up],
+        SOUTH => [:row_index, :up],
+        WEST => [:column_index, :down]
       }.freeze
 
       PATH_MODIFIER_CHANGES = { 'N' => NORTH, 'E' => EAST, 'S' => SOUTH, 'W' => WEST }.freeze
@@ -63,9 +63,6 @@ module FuturamaLand
         else
           direction = @direction
         end
-        STDERR.puts "d"*50 
-        STDERR.puts direction
-        STDERR.puts "d"*50 
         direction
       end
 
@@ -112,26 +109,22 @@ module FuturamaLand
       @found_booth = false
       @breaker_mode = false
       @teleport = false
+      @count = 0
     end
 
     def new_location
       row_or_column, new_direction = COMPASS_ADVICE[@current_direction]
       current_location = @location
       if new_direction == :up
-        current_location[row_or_column] -= 1
-      elsif new_direction == :down
         current_location[row_or_column] += 1
+      elsif new_direction == :down
+        current_location[row_or_column] -= 1
       end
-      @current_location = current_location
+      current_location
     end
 
     def can_move_to_object?
-      can_move = unbreakable_object(@current_object) ? false : true
-      STDERR.puts "*"*50
-      STDERR.puts can_move
-      STDERR.puts @current_object
-      STDERR.puts "*"*50
-  can_move
+      !(unbreakable_object(@current_object) || breakable_object(@current_object))
     end
 
     def move_to_object
@@ -146,13 +139,21 @@ module FuturamaLand
     end
 
     def wander_around
+      @count += 1
       @current_direction = predict_direction
+      STDERR.puts "direction#{@count}) #{@current_direction}"
+
       @current_location = new_location
+      STDERR.puts "direction#{@count}) #{@current_direction}"
+      # Right here should be hitting wall and turning east, instead its displaying ... and ject @
       @current_object = @map.object_at_location(@current_location)
-      if @directions_tried.size > 4
-        cleanup_state
-        'LOOP'
-      elsif can_move_to_object?
+      STDERR.puts "object #{@count}) #{@current_object}"
+      # if @directions_tried.size > 4
+      #   cleanup_state
+      #   'LOOP'
+      STDERR.puts "#{@count}) Can move to object? - #{can_move_to_object?}"
+
+      if can_move_to_object?
         move_to_object
         move_bender
         update_bender_on_map
@@ -227,6 +228,12 @@ module FuturamaLand
       @rows << row.split('')
     end
 
+    def display_map
+      @rows.each do |row|
+        STDERR.print row
+      end
+    end
+
     def locate_bender
       @rows.each_with_index do |row, row_index|
         column_index = row.index('@')
@@ -252,6 +259,7 @@ module FuturamaLand
     end
 
     def object_at_location(location)
+      # This is returning [4,1] meaning it went down one too far, then it turns right (east)
       @rows[location[:row_index]][location[:column_index]]
     end
 
