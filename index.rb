@@ -6,29 +6,8 @@ module FuturamaLand
   # bender is already self aware of Bender, and calling methods accordingly.
   # He hasn't taken this approach with modules before but is seeing how it goes
   module NewBenderFirmware
-    # Mostly 'concepts', 'objects', and 'things' about the city Bender needs to know
-    module CityLogicGates
-      OBJECTS = { '$' => :suicide_booth, 'B' => :beer, 'I' => :inverter, 'T' => :teleporters }.freeze
-      OBSTACLES = { '#' => :unbreakable, 'X' => :breakable }.freeze
-      OPEN_SPACE = ' '
-      BREAKABLE_OBJECT = OBSTACLES['X']
-      UNBREAKABLE_OBJECT = OBSTACLES['#']
-      SUICIDE_BOOTH = OBJECTS['$']
-      BEER = OBJECTS['B']
-      INVERTER = OBJECTS['I']
-      TELEPORER = OBJECTS['T']
-
-      def unbreakable_object(object)
-        object == '#' ? true : false
-      end
-
-      def breakable_object(object)
-        @breaker_mode && (object == 'X')
-      end
-    end
     module CompassLogicGates
       CARDINAL_DIRECTIONS = %w[NORTH EAST SOUTH WEST].freeze
-      CARDINAL_ABBR = %w[N E S W].freeze
       NORTH = CARDINAL_DIRECTIONS[0].freeze
       EAST = CARDINAL_DIRECTIONS[1].freeze
       SOUTH = CARDINAL_DIRECTIONS[2].freeze
@@ -77,10 +56,9 @@ module FuturamaLand
     end
   end
 
-  # All the firmware compiled
+  # Compiled Firmware
   module FirmwareUpdate
     include FuturamaLand::NewBenderFirmware::CompassLogicGates
-    include FuturamaLand::NewBenderFirmware::CityLogicGates
     include FuturamaLand::NewBenderFirmware::BenderProgrammableLogicFirmware
   end
 
