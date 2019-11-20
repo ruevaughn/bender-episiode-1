@@ -92,7 +92,6 @@ module FuturamaLand
     attr_accessor :breaker_mode
     attr_accessor :inverted
 
-
     # Bender State
     attr_accessor :direction
     attr_accessor :directions_tried
@@ -132,10 +131,13 @@ module FuturamaLand
       @direction = predict_direction until @direction
       update_map_on_benders_direction(@direction)
       @current_object = inspect_object_at_location
+      # STDERR.puts "Currentobject"
+      # STDERR.puts "#{@current_object}"
+      # STDERR.puts "Currentobject"
 
       if @directions_tried.size > 4
         @stuck_in_loop = true
-        @lonely_road = ['LOOP']
+        @lonely_road << ['LOOP']
       elsif can_move_to_object?(@current_object)
         move_to_object
         @location = move_bender
@@ -152,6 +154,10 @@ module FuturamaLand
 
     def inspect_object_at_location
       @map.object_in_front_of_bender
+      # STDERR.puts "Currentooobject"
+      # STDERR.puts "#{o}"
+      # STDERR.puts "Currentobject"
+      # o
     end
 
     def can_move_to_object?(object)
@@ -189,7 +195,7 @@ module FuturamaLand
     end
 
     def can_smash_object?(object)
-       @breaker_mode && object.match?(/X/i) ? true : false
+      @breaker_mode && object.match?(/X/i) ? true : false
     end
 
     def finish_taking_lonely_step
@@ -299,11 +305,8 @@ module FuturamaLand
       elsif new_direction == :down
         current_location[row_or_column] -= 1
       end
-      STDERR.puts "current_location"
-      STDERR.puts "#{current_location}"
       @location_ahead_of_bender = current_location
     end
-
 
     def display_map
       @rows.each do |row|
@@ -346,7 +349,8 @@ module FuturamaLand
 
     def object_in_front_of_bender
       object = view_map_object(@location_ahead_of_bender)
-      @object_ahead_of_bender
+      @object_ahead_of_bender = object
+      object
     end
 
     private
@@ -359,7 +363,6 @@ module FuturamaLand
       @rows[location[:row_index]][location[:column_index]]
     end
   end
-
 
   ########################################################################
   #     =------------------------------------------------------=         #
@@ -412,5 +415,4 @@ end
 
 FuturamaLand::OperationStopSuicideNation.download_and_obtain_map
 FuturamaLand::OperationStopSuicideNation.update_firmware
-FuturamaLand::OperationStopSuicideNation.save_bender
 FuturamaLand::OperationStopSuicideNation.save_bender
