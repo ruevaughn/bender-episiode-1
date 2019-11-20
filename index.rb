@@ -6,7 +6,7 @@
 #             (which they genereoursly let the professor build         #
 #                           *ahem* *cough*                             #
 #  =------------------------------------------------------------=      #
-#           Keepts track of Benders location, allows him to see        #                                                               #
+#           Keepts track of Benders locatifn, allows him to see        #                                                               #
 #              the objects just out of view, and make decsisiosn       #
 #                                                                      #
 ########################################################################
@@ -57,10 +57,10 @@ module FuturamaLand
         @inverted ? CompassLogicGates::INVERTED_DIRECTIONS_ABBR : CompassLogicGates::STANDARD_DIRECTIONS_ABBR
       end
 
-      def predict_move(object)
-        predict_bender_move(object)
-        predict_bender_interaction(object)
-      end
+      # def predict_move(object)
+      #   predict_bender_move(object)
+      #   predict_bender_interaction(object)
+      # end
     end
   end
 
@@ -91,11 +91,12 @@ module FuturamaLand
     attr_accessor :found_booth
     attr_accessor :breaker_mode
     attr_accessor :inverted
-    attr_reader :teleport
+
 
     # Bender State
     attr_accessor :direction
     attr_accessor :directions_tried
+    attr_accessor :stuck_in_loop
     attr_accessor :lonely_road
 
     # Bender Object Associations
@@ -125,13 +126,13 @@ module FuturamaLand
 
     def wander_around
       @direction = predict_direction until @direction
-      @map.examine_new_location_for_direction
+      @map.inspect_object(direction)
       @map.determine_if_direction_is_walkable(@direction)
 
       @current_location = new_location
       @current_object = @map.object_at_location(@current_location)
       if @directions_tried.size > 4
-        @looping = true
+        @stuck_in_loop = true
         @lonely_road = ['LOOP']
       elsif can_move_to_object?
         move_to_object
@@ -287,8 +288,8 @@ module FuturamaLand
     def examine_new_location_for_direction
     end
 
-    def determine_if_direction_is_walkable(direction)
-      obect_at_location(location)
+    def inspect_object(direction)
+      object_at_location(direction)
     end
 
     def upload_to_map(row)
@@ -342,7 +343,14 @@ module FuturamaLand
     def update_map(location, symbol)
       @rows[location[:row_index]][location[:column_index]] = symbol
     end
+    private
+
+    def location_south_of_bender
+      STDERR.puts bender_location
+    end
+
   end
+
 
   ########################################################################
   #     =------------------------------------------------------=         #
@@ -351,7 +359,7 @@ module FuturamaLand
   #                                                                      #
   #                   * Initialize Bender and Map                        #
   ########################################################################
-  # X       The map will keep track of the state of Benders Locations     #
+  #       The map will keep track of the state of Benders Locations     #
   ########################################################################
   # =>                                                                   #
   ########################################################################
