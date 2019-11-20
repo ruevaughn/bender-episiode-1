@@ -114,8 +114,6 @@ module FuturamaLand
       @lonely_road = []
       @count = 0
       @map = map
-
-      bender_time__before_depressive_crash
     end
 
     def update_map_on_benders_direction(direction)
@@ -123,6 +121,8 @@ module FuturamaLand
     end
 
     def showoff
+      bender_quote
+      wave_flag
     end
 
     # Bender needs to get a location. It needs to be reliable.
@@ -133,7 +133,6 @@ module FuturamaLand
       update_map_on_benders_direction(@direction)
       @object = inspect_object_at_location
 
-      @current_object = @map.object_at_location(@current_location)
       if @directions_tried.size > 4
         @stuck_in_loop = true
         @lonely_road = ['LOOP']
@@ -241,16 +240,22 @@ module FuturamaLand
       @teleport = false
     end
 
-    def bender_time__before_depressive_crash
-      STDERR.print "¶i~~~~~~~~~~~~()" # I guess it's a crime to have colored flags these days.
-      STDERR.print "¶|  FUTURAMA. ||" # .colorize(color: :red, background: :orange)
-      STDERR.print "¶|  (BENDER)  ||" # colorize(color: :grey)
-      STDERR.print "¶|  RULEZ!!!  ||" # colorize(color: :red, background: :orange)
-      STDERR.print "¶|            ||"
-      STDERR.print "¶+|~~~~~~~~~~~()"
-      STDERR.print "¶|"
-      STDERR.print "¶|"
-      STDERR.print "()"
+    def bender_quote
+      quotes = []
+      quotes << 'I got ants in my butt, and I needs to strut.'
+      STDERR.puts quotes.sample
+    end
+
+    def wave_flag
+      STDERR.puts "¶i~~~~~~~~~~~~()" # I guess it's a crime to have colored flags these days.
+      STDERR.puts "¶|  FUTURAMA. ||" # .colorize(color: :red, background: :orange)
+      STDERR.puts "¶|  (BENDER)  ||" # colorize(color: :grey)
+      STDERR.puts "¶|  RULEZ!!!  ||" # colorize(color: :red, background: :orange)
+      STDERR.puts "¶|            ||"
+      STDERR.puts "¶+|~~~~~~~~~~~()"
+      STDERR.puts "¶|"
+      STDERR.puts "¶|"
+      STDERR.puts "()"
     end
   end
 
@@ -289,13 +294,15 @@ module FuturamaLand
 
     def inspect_location_in_direction(direction)
       row_or_column, new_direction = COMPASS_ADVICE[direction]
-      current_location = bender_location
+      current_location = @bender_location.dup
       if new_direction == :up
         current_location[row_or_column] += 1
       elsif new_direction == :down
         current_location[row_or_column] -= 1
       end
-      location_ahead_of_bender = current_location
+      STDERR.puts "current_location"
+      STDERR.puts "#{current_location}"
+      @location_ahead_of_bender = current_location
     end
 
 
@@ -310,8 +317,8 @@ module FuturamaLand
         column_index = row.index('@')
         if column_index
           location = { row_index: row_index, column_index: column_index }
-          bender_location = location
-          STDERR.puts "Bender located at #{location}"
+          @bender_location = location
+          STDERR.puts "Bender located at #{@bender_location}"
         end
         break if column_index
       end
@@ -339,7 +346,8 @@ module FuturamaLand
     end
 
     def object_in_front_of_bender
-      view_map_object(location_ahead_of_bender)
+      object = view_map_object(@location_ahead_of_bender)
+      @object_ahead_of_bender
     end
 
     private
@@ -356,7 +364,7 @@ module FuturamaLand
 
   ########################################################################
   #     =------------------------------------------------------=         #
-  #                     1 - Begin -indes.rb                              #
+  #                     1 - Begin -index.rb                              #
   #  =------------------------------------------------------------=      #
   #                                                                      #
   #                   * Initialize Bender and Map                        #
@@ -395,6 +403,7 @@ module FuturamaLand
       # To debug: STDERR.puts "Debug messages..."
       @map.locate_bender(@bender)
       @bender.showoff
+
       @looping = false
       @bender.wander_around until @bender.found_booth || @bender.stuck_in_loop
       @bender.lonely_road.each { |lonely_step| puts lonely_step }
@@ -404,4 +413,5 @@ end
 
 FuturamaLand::OperationStopSuicideNation.download_and_obtain_map
 FuturamaLand::OperationStopSuicideNation.update_firmware
+FuturamaLand::OperationStopSuicideNation.save_bender
 FuturamaLand::OperationStopSuicideNation.save_bender
