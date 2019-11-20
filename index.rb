@@ -1,5 +1,23 @@
 # frozen_string_literal: true
 
+
+
+########################################################################
+#     =------------------------------------------------------=         #
+# A                  4 - Government issues Firmwar                     #
+#             (which they genereoursly let the professor build         #
+#                           *ahem* *cough*                             #
+#  =------------------------------------------------------------=      #
+#           Keepts track of Benders location, allows him to see        #                                                               #
+#              the objects just out of view, and make decsisiosn       #
+#                                                                      #
+########################################################################
+########################################################################
+# =>                                                                <= #t
+########################################################################
+
+
+
 # Welcome to Futurama!
 module FuturamaLand
   # Benders new firmware to be compiled - the writer of this firmware assumes
@@ -8,43 +26,17 @@ module FuturamaLand
   module NewBenderFirmware
     module CompassLogicGates
 
-      CARDINAL_DIRECTIONS = %w[NORTH EAST SOUTH WEST].freeze
-      CARDINAL_ABBR = %w[N E S W].freeze
-      NORTH = CARDINAL_DIRECTIONS[0].freeze
-      EAST = CARDINAL_DIRECTIONS[1].freeze
-      SOUTH = CARDINAL_DIRECTIONS[2].freeze
-      WEST = CARDINAL_DIRECTIONS[3].freeze
-
-      COMPASS_ADVICE = {
-        NORTH => [:row_index, :down],
-        EAST => [:column_index, :up],
-        SOUTH => [:row_index, :up],
-        WEST => [:column_index, :down]
-      }.freeze
-
-      PATH_MODIFIER_CHANGES = { 'N' => NORTH, 'E' => EAST, 'S' => SOUTH, 'W' => WEST }.freeze
-
-      STANDARD_DIRECTIONS = { 'SOUTH' => 'S', 'EAST' => 'E', 'NORTH' => 'N', 'WEST' => 'W' }.freeze
-      # STANDARD_DIRECTIONS = { 'S' => SOUTH, 'E' => EAST, 'N' => NORTH, 'W' => WEST }.freeze
-      STANDARD_DIRECTIONS_ABBR = %w[SOUTH EAST NORTH WEST].freeze
-
-      INVERTED_DIRECTIONS = { 'WEST' => 'W', 'NORTH' => 'N', 'EAST' => 'E', 'SOUTH' => 'S' }.freeze
-      # INVERTED_DIRECTIONS = { 'W' => WEST, 'N' => NORTH, 'E' => EAST, 'S' => SOUTH }.freeze
-      INVERTED_DIRECTIONS_ABBR = %w[WEST NORTH EAST SOUTH].freeze
-    end
 
     # These firmware updates are aware of the original 'Bender' prototype...
     # Not sure if I like this modular approach but i'm sticking with it
     # Since it gives it the 'adding on' feel which is described in the scenario
     module BenderProgrammableLogicFirmware
       def predict_direction
-        directions = get_directions
-        if @directions_tried.include?(@direction)
-          direction = directions.find { |d| d unless @directions_tried.include?(d) }
+        if @directions_tried.include(@direction)
+          @directions_tried.map { |d| !@direction_tried.include?(@direction)}.flatten.first
         else
-          direction = @direction
+          @direction
         end
-        direction
       end
 
       def get_directions
@@ -64,21 +56,49 @@ module FuturamaLand
     include FuturamaLand::NewBenderFirmware::BenderProgrammableLogicFirmware
   end
 
+
+
+
+
+
+
+
+
+########################################################################
+#     =------------------------------------------------------=         #
+T#                     2 - Big Man Bender Hinself!                     #
+#  =------------------------------------------------------------=      #
+#           Keepts track of Benders location, allows him to see        #                                                               #
+#              the objects just out of view, and make decsisiosn       #
+#                                                                      #
+########################################################################
+########################################################################
+# =>                                                                <= #t
+########################################################################
+
+
+
+
+
+
   # Bender - Beer, Women, Robots, Partying, Fry - These are just some of his favorite things
   #          on his Hard Drive. Unfortunately things have gotten sour  for the little guy and
   #          No one feels bad for him but himself. He's gotten to the point we have to intervene -
   #          Little does he know he's about to get a firmware update
   class Bender
-    attr_accessor :location
+    # Bender Modes
     attr_accessor :found_booth
     attr_accessor :breaker_mode
     attr_accessor :inverted
+    attr_reader :teleport
+
+    # Bender State
     attr_accessor :direction
     attr_accessor :directions_tried
-    attr_accessor :direction_object
-    attr_accessor :current_object
-    attr_accessor :map
     attr_accessor :lonely_road
+
+    # Bender Object Associations
+    attr_accessor :map
 
     include FuturamaLand::FirmwareUpdate
 
@@ -86,18 +106,28 @@ module FuturamaLand
       @location = {}
       @direction = 'SOUTH'
       @directions_tried = []
-      @current_object = nil
       @found_booth = false
       @breaker_mode = false
       @teleport = false
       @lonely_road = []
       @count = 0
       @map = map
+
+      bender_time__before_depressive_crash
+
+   end
+
+    def showoff
     end
 
+    # Bender needs to get a location. It needs to be reliable.
+    # It needs to follow the conention. Never shoud it return wrong. ever.
 
     def wander_around
-      @current_direction = predict_direction
+      @direction = predict_direction until @direction
+      @map.examine_new_location_for_direction
+      @map.determine_if_direction_is_walkable(@direction)
+
       @current_location = new_location
       @current_object = @map.object_at_location(@current_location)
       if @directions_tried.size > 4
@@ -131,7 +161,7 @@ module FuturamaLand
     def can_move_to_object?
       if @current_object == /\s+/
         true
-      eslif @current_object != /\#/ || @current_object != /X/i
+      eslif @current_object != /#/ || @current_object != /X/i
       elsif impassable_object?
         false
       elsif !(can_smash?)
@@ -156,7 +186,7 @@ module FuturamaLand
     end
 
     def impassable_object?
-      @current_object && @current_object == /\#'
+      @current_object && @current_object == /#/
     end
 
     def can_smash?
@@ -213,15 +243,61 @@ module FuturamaLand
       @breaker_mode = false
       @teleport = false
     end
+
+    def bender_time__before_depressive_crash
+      STDERR.print "¶i~~~~~~~~~~~~()" # I guess it's a crime to have colored flags these days.
+      STDERR.print "¶|  FUTURAMA. ||" # .colorize(color: :red, background: :orange)
+      STDERR.print "¶|  (BENDER)  ||" # colorize(color: :grey)
+      STDERR.print "¶|  RULEZ!!!  ||" # colorize(color: :red, background: :orange)
+      STDERR.print "¶|            ||"
+      STDERR.print "¶+|~~~~~~~~~~~()"
+      STDERR.print "¶|"
+      STDERR.print "¶|"
+      STDERR.print "()"
+    end
   end
+
+
+
+
+########################################################################
+#     =------------------------------------------------------=         #
+#                     2 - Map Class     b                              #
+#  =------------------------------------------------------------=      #
+#           Keepts track of Benders location, allows him to see        #                                                               #
+#              the objects just out of view, and make decsisiosn       #
+#                                                                      #
+########################################################################
+#X       The map will keep track of the state of Benders Locations     #
+########################################################################
+# =>                                                                <= #
+########################################################################
+
+
+
+
 
   # I'm the map i'm the map i'm the map!
   class CityMap
     attr_accessor :rows
     attr_accessor :bender
+    attr_accessor :bender_location
+    attr_accessor :location_ahead_of_bender
+    attr_accessor :object_ahead_of_bender
 
     def initialize(attrs = {})
       @rows = []
+      @bender_location
+      @bender_next_location_attempt
+    end
+
+
+    def examine_new_location_for_direction
+
+    end
+
+    def determine_if_direction_is_walkable(direction)
+      obect_at_location(location)
     end
 
     def upload_to_map(row)
@@ -239,7 +315,7 @@ module FuturamaLand
         column_index = row.index('@')
         if column_index
           location = { row_index: row_index, column_index: column_index }
-          mark_bender_on_map(bender, location)
+          bender_location = location
           STDERR.puts "Bender located at #{location}"
         end
         break if column_index
@@ -264,16 +340,11 @@ module FuturamaLand
       @rows[location[:row_index]][location[:column_index]]
     end
 
-    def mark_bender_on_map(bender, location)
-      @bender = bender
-      @bender.location = location
-    end
-
     def move_bender_on_map(current_location)
       update_map(current_location, '@')
     end
 
-    def bender_smash_obstacle(current_location)
+    def bender_smash_gg(current_location)
       update_map(current_location, ' ')
     end
 
@@ -281,6 +352,29 @@ module FuturamaLand
       @rows[location[:row_index]][location[:column_index]] = symbol
     end
   end
+
+
+
+
+
+
+########################################################################
+#     =------------------------------------------------------=         #
+#                     1 - Begin -indes.rb                              #
+#  =------------------------------------------------------------=      #
+#                                                                      #
+#                   * Initialize Bender and Map                        #
+########################################################################
+#X       The map will keep track of the state of Benders Locations     #
+########################################################################
+# =>                                                                   #
+########################################################################
+
+
+
+
+
+
 
   # Good news everyone! We can get started!
   # Thank Goodness Leela knows what she's doing.
@@ -291,7 +385,7 @@ module FuturamaLand
   # -  Fry Trying to Act Like He Doesn't Care - though deep down he's worried
   #    for his friend.
   module OperationStopSuicideNation
-    def self.download_map
+    def self.download_and_obtain_map
       # Auto-generated code below aims at helping you parse
       # the standard input according to the problem statement.
       l, c = gets.split(' ').collect { |x| x.to_i }
@@ -302,7 +396,7 @@ module FuturamaLand
       end
     end
 
-    def self.upload_firmware
+    def self.update_firmware
       @bender = FuturamaLand::Bender.new(@map)
     end
 
@@ -310,13 +404,14 @@ module FuturamaLand
       # Write an action using puts
       # To debug: STDERR.puts "Debug messages..."
       @map.locate_bender(@bender)
+      @bender.showoff
       @looping = false
-      @bender.wander_around until @bender.found_booth || @looping
+      @bender.wander_around until @bender.found_booth || @bender.stuck_in_loop
       @bender.lonely_road.each { |lonely_step| puts lonely_step }
     end
   end
 end
 
-FuturamaLand::OperationStopSuicideNation.download_map
-FuturamaLand::OperationStopSuicideNation.upload_firmware
+FuturamaLand::OperationStopSuicideNation.download_and_obtain_map
+FuturamaLand::OperationStopSuicideNation.update_firmware
 FuturamaLand::OperationStopSuicideNation.save_bender
