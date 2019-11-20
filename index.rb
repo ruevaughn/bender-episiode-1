@@ -131,10 +131,6 @@ module FuturamaLand
       @direction = predict_direction until @direction
       update_map_on_benders_direction(@direction)
       @current_object = inspect_object_at_location
-      # STDERR.puts "Currentobject"
-      # STDERR.puts "#{@current_object}"
-      # STDERR.puts "Currentobject"
-
       if @directions_tried.size > 4
         @stuck_in_loop = true
         @lonely_road << ['LOOP']
@@ -154,10 +150,6 @@ module FuturamaLand
 
     def inspect_object_at_location
       @map.object_in_front_of_bender
-      # STDERR.puts "Currentooobject"
-      # STDERR.puts "#{o}"
-      # STDERR.puts "Currentobject"
-      # o
     end
 
     def can_move_to_object?(object)
