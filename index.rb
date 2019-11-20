@@ -72,7 +72,7 @@ module FuturamaLand
 
   ########################################################################
   #     =------------------------------------------------------=         #
-  #                     2 - Big Man Bender Hinself!                     #
+  #                     2 - Big Man Bender Himself!                     #
   #  =------------------------------------------------------------=      #
   #           Keepts track of Benders location, allows him to see        #                                                               #
   #              the objects just out of view, and make decsisiosn       #
@@ -116,7 +116,11 @@ module FuturamaLand
       @map = map
 
       bender_time__before_depressive_crash
-   end
+    end
+
+    def update_map_on_benders_direction(direction)
+      @map.inspect_location_in_direction(direction)
+    end
 
     def showoff
     end
@@ -126,10 +130,9 @@ module FuturamaLand
 
     def wander_around
       @direction = predict_direction until @direction
-      @map.inspect_object(direction)
-      @map.determine_if_direction_is_walkable(@direction)
+      update_map_on_benders_direction(@direction)
+      @object = inspect_object_at_location
 
-      @current_location = new_location
       @current_object = @map.object_at_location(@current_location)
       if @directions_tried.size > 4
         @stuck_in_loop = true
@@ -148,15 +151,8 @@ module FuturamaLand
 
     private
 
-    def new_location
-      row_or_column, new_direction = COMPASS_ADVICE[@current_direction]
-      current_location = @location.dup
-      if new_direction == :up
-        current_location[row_or_column] += 1
-      elsif new_direction == :down
-        current_location[row_or_column] -= 1
-      end
-      current_location
+    def inspect_object_at_location
+      @map.object_in_front_of_bender
     end
 
     def can_move_to_object?
@@ -279,22 +275,29 @@ module FuturamaLand
     attr_accessor :location_ahead_of_bender
     attr_accessor :object_ahead_of_bender
 
+    include FuturamaLand::NewBenderFirmware::CompassLogicGates
+
     def initialize(attrs = {})
       @rows = []
       @bender_location
       @bender_next_location_attempt
     end
 
-    def examine_new_location_for_direction
-    end
-
-    def inspect_object(direction)
-      object_at_location(direction)
-    end
-
     def upload_to_map(row)
       @rows << row.split('')
     end
+
+    def inspect_location_in_direction(direction)
+      row_or_column, new_direction = COMPASS_ADVICE[direction]
+      current_location = bender_location
+      if new_direction == :up
+        current_location[row_or_column] += 1
+      elsif new_direction == :down
+        current_location[row_or_column] -= 1
+      end
+      location_ahead_of_bender = current_location
+    end
+
 
     def display_map
       @rows.each do |row|
@@ -327,11 +330,6 @@ module FuturamaLand
       location
     end
 
-    def object_at_location(location)
-      # This is returning [4,1] meaning it went down one too far, then it turns right (east)
-      @rows[location[:row_index]][location[:column_index]]
-    end
-
     def move_bender_on_map(current_location)
       update_map(current_location, '@')
     end
@@ -340,15 +338,19 @@ module FuturamaLand
       update_map(current_location, ' ')
     end
 
+    def object_in_front_of_bender
+      view_map_object(location_ahead_of_bender)
+    end
+
+    private
+
     def update_map(location, symbol)
       @rows[location[:row_index]][location[:column_index]] = symbol
     end
-    private
 
-    def location_south_of_bender
-      STDERR.puts bender_location
+    def view_map_object(location)
+      @rows[location[:row_index]][location[:column_index]]
     end
-
   end
 
 
