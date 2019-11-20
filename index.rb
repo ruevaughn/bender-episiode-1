@@ -25,6 +25,25 @@ module FuturamaLand
   # He hasn't taken this approach with modules before but is seeing how it goes
   module NewBenderFirmware
     module CompassLogicGates
+      COMPASS_ADVICE = {
+        north: [:column_index, :up],
+        east: [:row_index, :up],
+        south: [:row_index, :down],
+        west: [:column_index, :down]
+      }.freeze
+
+      CARDINAL_DIRECTIONS = %w[NORTH EAST SOUTH WEST].freeze
+      CARDINAL_ABBR = %w[N E S W].freeze
+      NORTH = CARDINAL_DIRECTIONS[0].freeze
+      EAST = CARDINAL_DIRECTIONS[1].freeze
+      SOUTH = CARDINAL_DIRECTIONS[2].freeze
+      WEST = CARDINAL_DIRECTIONS[3].freeze
+
+      DIRECTION_CHANGES = { 'N' => NORTH, 'E' => EAST, 'S' => SOUTH, 'W' => WEST }.freeze
+
+      STANDARD_DIRECTIONS = { south: SOUTH, east: EAST, north: NORTH, west: WEST }.freeze
+      INVERTED_DIRECTIONS = { west: WEST, north: NORTH, east: EAST, south: SOUTH }.freeze
+    end
 
 
     # These firmware updates are aware of the original 'Bender' prototype...
@@ -66,7 +85,7 @@ module FuturamaLand
 
 ########################################################################
 #     =------------------------------------------------------=         #
-T#                     2 - Big Man Bender Hinself!                     #
+#                     2 - Big Man Bender Hinself!                     #
 #  =------------------------------------------------------------=      #
 #           Keepts track of Benders location, allows him to see        #                                                               #
 #              the objects just out of view, and make decsisiosn       #
