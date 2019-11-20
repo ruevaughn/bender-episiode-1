@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-
-
 ########################################################################
 #     =------------------------------------------------------=         #
 # A                  4 - Government issues Firmwar                     #
@@ -15,8 +13,6 @@
 ########################################################################
 # =>                                                                <= #t
 ########################################################################
-
-
 
 # Welcome to Futurama!
 module FuturamaLand
@@ -45,14 +41,13 @@ module FuturamaLand
       INVERTED_DIRECTIONS = { west: WEST, north: NORTH, east: EAST, south: SOUTH }.freeze
     end
 
-
     # These firmware updates are aware of the original 'Bender' prototype...
     # Not sure if I like this modular approach but i'm sticking with it
     # Since it gives it the 'adding on' feel which is described in the scenario
     module BenderProgrammableLogicFirmware
       def predict_direction
         if @directions_tried.include(@direction)
-          @directions_tried.map { |d| !@direction_tried.include?(@direction)}.flatten.first
+          @directions_tried.map { |d| !@direction_tried.include?(@direction) }.flatten.first
         else
           @direction
         end
@@ -75,30 +70,17 @@ module FuturamaLand
     include FuturamaLand::NewBenderFirmware::BenderProgrammableLogicFirmware
   end
 
-
-
-
-
-
-
-
-
-########################################################################
-#     =------------------------------------------------------=         #
-#                     2 - Big Man Bender Hinself!                     #
-#  =------------------------------------------------------------=      #
-#           Keepts track of Benders location, allows him to see        #                                                               #
-#              the objects just out of view, and make decsisiosn       #
-#                                                                      #
-########################################################################
-########################################################################
-# =>                                                                <= #t
-########################################################################
-
-
-
-
-
+  ########################################################################
+  #     =------------------------------------------------------=         #
+  #                     2 - Big Man Bender Hinself!                     #
+  #  =------------------------------------------------------------=      #
+  #           Keepts track of Benders location, allows him to see        #                                                               #
+  #              the objects just out of view, and make decsisiosn       #
+  #                                                                      #
+  ########################################################################
+  ########################################################################
+  # =>                                                                <= #t
+  ########################################################################
 
   # Bender - Beer, Women, Robots, Partying, Fry - These are just some of his favorite things
   #          on his Hard Drive. Unfortunately things have gotten sour  for the little guy and
@@ -133,7 +115,6 @@ module FuturamaLand
       @map = map
 
       bender_time__before_depressive_crash
-
    end
 
     def showoff
@@ -180,7 +161,7 @@ module FuturamaLand
     def can_move_to_object?
       if @current_object == /\s+/
         true
-      eslif @current_object != /#/ || @current_object != /X/i
+        eslif @current_object != /#/ || @current_object != /X/i
       elsif impassable_object?
         false
       elsif !(can_smash?)
@@ -276,25 +257,18 @@ module FuturamaLand
     end
   end
 
-
-
-
-########################################################################
-#     =------------------------------------------------------=         #
-#                     2 - Map Class     b                              #
-#  =------------------------------------------------------------=      #
-#           Keepts track of Benders location, allows him to see        #                                                               #
-#              the objects just out of view, and make decsisiosn       #
-#                                                                      #
-########################################################################
-#X       The map will keep track of the state of Benders Locations     #
-########################################################################
-# =>                                                                <= #
-########################################################################
-
-
-
-
+  ########################################################################
+  #     =------------------------------------------------------=         #
+  #                     2 - Map Class     b                              #
+  #  =------------------------------------------------------------=      #
+  #           Keepts track of Benders location, allows him to see        #                                                               #
+  #              the objects just out of view, and make decsisiosn       #
+  #                                                                      #
+  ########################################################################
+  # X       The map will keep track of the state of Benders Locations     #
+  ########################################################################
+  # =>                                                                <= #
+  ########################################################################
 
   # I'm the map i'm the map i'm the map!
   class CityMap
@@ -310,9 +284,7 @@ module FuturamaLand
       @bender_next_location_attempt
     end
 
-
     def examine_new_location_for_direction
-
     end
 
     def determine_if_direction_is_walkable(direction)
@@ -372,28 +344,17 @@ module FuturamaLand
     end
   end
 
-
-
-
-
-
-########################################################################
-#     =------------------------------------------------------=         #
-#                     1 - Begin -indes.rb                              #
-#  =------------------------------------------------------------=      #
-#                                                                      #
-#                   * Initialize Bender and Map                        #
-########################################################################
-#X       The map will keep track of the state of Benders Locations     #
-########################################################################
-# =>                                                                   #
-########################################################################
-
-
-
-
-
-
+  ########################################################################
+  #     =------------------------------------------------------=         #
+  #                     1 - Begin -indes.rb                              #
+  #  =------------------------------------------------------------=      #
+  #                                                                      #
+  #                   * Initialize Bender and Map                        #
+  ########################################################################
+  # X       The map will keep track of the state of Benders Locations     #
+  ########################################################################
+  # =>                                                                   #
+  ########################################################################
 
   # Good news everyone! We can get started!
   # Thank Goodness Leela knows what she's doing.
