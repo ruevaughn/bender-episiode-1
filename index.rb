@@ -131,12 +131,12 @@ module FuturamaLand
     def wander_around
       @direction = predict_direction until @direction
       update_map_on_benders_direction(@direction)
-      @object = inspect_object_at_location
+      @current_object = inspect_object_at_location
 
       if @directions_tried.size > 4
         @stuck_in_loop = true
         @lonely_road = ['LOOP']
-      elsif can_move_to_object?
+      elsif can_move_to_object?(@current_object)
         move_to_object
         @location = move_bender
         update_bender_on_map
@@ -154,13 +154,12 @@ module FuturamaLand
       @map.object_in_front_of_bender
     end
 
-    def can_move_to_object?
-      if @current_object == /\s+/
+    def can_move_to_object?(object)
+      if is_empty_space?(object)
         true
-        eslif @current_object != /#/ || @current_object != /X/i
-      elsif impassable_object?
-        false
-      elsif !(can_smash?)
+      elsif can_smash_object?(object)
+        true
+      elsif unbreakable_object?(object)
         false
       end
     end
@@ -177,20 +176,20 @@ module FuturamaLand
       end
     end
 
+    def is_empty_space?(object)
+      object.match?(/\s{1}/)
+    end
+
     def handle_open_space
       @location = @current_location
     end
 
-    def impassable_object?
-      @current_object && @current_object == /#/
+    def unbreakable_object?(object)
+      @current_object.match?(/#/)
     end
 
-    def can_smash?
-      if @current_object && @current_object == /X/i
-        true if @breaker_mode == true
-      else
-        false
-      end
+    def can_smash_object?(object)
+       @breaker_mode && object.match?(/X/i) ? true : false
     end
 
     def finish_taking_lonely_step
