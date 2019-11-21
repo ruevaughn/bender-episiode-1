@@ -136,9 +136,8 @@ module FuturamaLand
         @lonely_road << ['LOOP']
       elsif can_move_to_object?
         interact_with_object
-        move_to_object
-        cleanup_state
-        finish_taking_lonely_step
+        take_sad_lonely_step
+        free_ram_for_next_step
       else
         @directions_tried << @current_direction
         wander_around
@@ -197,17 +196,12 @@ module FuturamaLand
       track_benders_path
     end
 
-    def track_benders_patb
-      @steps_taken << @direction
+    def track_benders_path
+      @lonely_road << @direction
     end
 
     def handle_path_modifier
       @direction = PATH_MODIFIER_CHANGES[@current_object]
-    end
-
-    def take_sad_lonely_step
-      @location =
-      @map.move_bender_on_map(@location)
     end
 
     def handle_bender_rationalization
@@ -239,7 +233,7 @@ module FuturamaLand
       @found_booth = true
     end
 
-    def cleanup_state
+    def free_ram_for_next_step
       @directions_tried = []
     end
 
@@ -349,7 +343,7 @@ module FuturamaLand
       update_map(location_ahead_of_bender, ' ')
     end
 
-    def move_bendegg_on_map(current_location)
+    def move_bendeg_on_map(current_location)
       update_map(current_location, '@')
     end
 
