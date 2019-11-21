@@ -142,15 +142,15 @@ module FuturamaLand
 
     def wander_around
       @count += 1
-      @directions_tried = [1,2,3,4,5] if @count >= 6
-       STDERR.puts "#{@count}) Bender was facing #{@direction}"
+      # @directions_tried = [1, 2, 3, 4, 5] if @count >= 6
+      STDERR.puts "#{@count}) Bender was facing #{@direction}"
       @direction = predict_direction
-       STDERR.puts "#{@count}) Bender is now facing #{@direction}"
-       STDERR.puts "#{@count}) Bender is at #{@map.benders_location}"
+      STDERR.puts "#{@count}) Bender is now facing #{@direction}"
+      STDERR.puts "#{@count}) Bender is at #{@map.benders_location}"
       loc = @map.get_benders_new_location(@direction)
-       STDERR.puts "#{@count}) Bender will be moving to #{loc}"
+      STDERR.puts "#{@count}) Bender will be moving to #{loc}"
       @current_object = @map.object_in_front_of_bender
-       STDERR.puts "#{@count}) Benders is facing object #{decode_object @current_object}"
+      STDERR.puts "#{@count}) Benders is facing object #{decode_object @current_object}"
       STDERR.puts "#{@count}) Can move to object: #{can_move_to_object?}"
       if @directions_tried.size > 4
         STDERR.puts "#{@count}) Directions tried: #{@directions_tried} #{@directions_tried.size}"
@@ -161,14 +161,15 @@ module FuturamaLand
         interact_with_object
         STDERR.puts("#{@count}) About to Take Step #{decode_object @current_object}")
         if @teleport
-           STDERR.puts "#{@count}) Teleporting Bender"
+          STDERR.puts "#{@count}) Teleporting Bender"
           teleport_bender
         else
-           STDERR.puts "#{@count}) Taking Sad Lonely Step"
-           take_sad_lonely_step
+          STDERR.puts "#{@count}) Taking Sad Lonely Step"
+          take_sad_lonely_step
+          @direction = @instant_change_direction.dup if @instant_change_direction
         end
         STDERR.puts("#{@count}) Freeing Ram")
-        free_ram_for_next_step
+        free_bender_ram_for_next_step
       else
         # STDERR.puts("#{@count}) Adding #{@direction} to #{@directions_tried}")
         change_direction
@@ -205,14 +206,14 @@ module FuturamaLand
       # STDERR.puts("#{@count}) Interacting with object: #{decode_object @current_object}")
       case @current_object
       when /\s/ then true
-      when /(N|E|S|W)/i then handle_path_modifier
+      when /N|E|S|W/i then handle_path_modifier
       when /X/i then handle_bender_smashin
       when /\$/ then handle_bender_found_suicide_booth
       when /I/i then handle_bender_inverted
       when /T/i then handle_bender_teleport_mode
       when /B/i then handle_bender_rationalization
       else
-        raise "Unhandled interaction with object #{decode_object @current_object}" unless @current_
+        raise "Unhandled interaction with object #{decode_object @current_object}"
       end
     end
 
@@ -260,7 +261,7 @@ module FuturamaLand
     end
 
     def handle_path_modifier
-      @direction = PATH_MODIFIER_CHANGES[@current_object]
+      @instant_change_direction = DIRECTION_CHANGES[@current_object]
     end
 
     def handle_bender_rationalization
@@ -293,11 +294,11 @@ module FuturamaLand
 
     def handle_bender_found_suicide_booth
       @found_booth = true
-
     end
 
-    def free_ram_for_next_step
+    def free_bender_ram_for_next_step
       @directions_tried = []
+      @instant_change_direction = nil
     end
 
     def bender_quote
@@ -355,7 +356,7 @@ module FuturamaLand
       STDERR.puts "#{@bender.count}) Getting new loc from direction: #{direction}"
       # STDERR.puts "~~~~~~~#{COMPASS_ADVICE}~~~~~~~~~"
       row_or_column, new_direction = COMPASS_ADVICE[direction.to_sym]
-       STDERR.puts "row_or_column: #{row_or_column} new_direction: #{new_direction}"
+      STDERR.puts "row_or_column: #{row_or_column} new_direction: #{new_direction}"
       current_location = @benders_location.dup
       if new_direction == :up
         current_location[row_or_column] += 1
