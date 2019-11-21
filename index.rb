@@ -104,7 +104,7 @@ module FuturamaLand
   # a firmware update
   class Bender
     # Bender Modes
-    attr_accessor :found_booth
+    attr_reader :found_booth
     attr_accessor :breaker_mode
     attr_accessor :inverted
 
@@ -142,7 +142,7 @@ module FuturamaLand
 
     def wander_around
       @count += 1
-      #   @directions_tried = [1, 2, 3, 4, 5] if @count >= 7
+      # @directions_tried = [1, 2, 3, 4, 5] if @count >= 16
       STDERR.puts "#{@count}) Bender was facing #{@direction}"
       @direction = predict_direction
       STDERR.puts "#{@count}) Bender is now facing #{@direction}"
@@ -158,11 +158,12 @@ module FuturamaLand
         @lonely_road << ['LOOP']
       elsif can_move_to_object?
         STDERR.puts("#{@count}) About to interact with object: #{decode_object @current_object}")
+        # @map.display_map
         interact_with_object
         STDERR.puts("#{@count}) About to Take Step #{decode_object @current_object}")
         if @teleport
           STDERR.puts "#{@count}) Teleporting Bender"
-          teleport_bender
+          teleport_bender_on_map
         else
           STDERR.puts "#{@count}) Taking Sad Lonely Step"
           take_sad_lonely_step
@@ -209,10 +210,10 @@ module FuturamaLand
       when /\s/ then true
       when /N|E|S|W/i then handle_path_modifier
       when /X/i then handle_bender_smashin
-      when /\$/ then handle_bender_found_suicide_booth
       when /I/i then handle_bender_inverted
       when /T/i then handle_bender_teleport_mode
       when /B/i then handle_bender_rationalization
+      when '$' then handle_bender_found_suicide_booth
       else
         raise "Unhandled interaction with object #{decode_object @current_object}"
       end
@@ -237,19 +238,20 @@ module FuturamaLand
       (@breaker_mode && @current_object.match?(/X/i)) ? true : false
     end
 
-    def teleport_bender
-      # STDERR.puts "#{@count}) Teleporting to bender: Bender location before: #{@map.benders_location}"
-      toggle_teleport
-      @map.teleport_bender
-      # STDERR.puts "#{@count}) Done teleporting to bender: Bender location after: #{@map.benders_location}"
+    def teleport_bender_on_map
+      STDERR.puts "#{@count}) Teleporting to bender: Bender location before: #{@map.benders_location}"
+      @map.locate_other_teleporter
+      @map.move_bender_to_new_location
+      track_benders_path
+      STDERR.puts "#{@count}) Done teleporting to bender: Bender location after: #{@map.benders_location}"
     end
 
     def take_sad_lonely_step
-      # STDERR.puts "#{@count}) Moving Bender, current loc: #{@map.benders_location}"
-      # STDERR.puts "#{@count}) Moving Bender, current loc: #{@map.location_ahead_of_bender}"
+      STDERR.puts "#{@count}) Moving Bender, current loc: #{@map.benders_location}"
+      STDERR.puts "#{@count}) Moving Bender, current loc: #{@map.location_ahead_of_bender}"
       @map.move_bender_to_new_location
-      # STDERR.puts "#{@count}) Moved Bender, current loc: #{@map.benders_location}"
-      # STDERR.puts "#{@count}) Movied Bender, current loc: #{@map.location_ahead_of_bender}"
+      STDERR.puts "#{@count}) Moved Bender, current loc: #{@map.benders_location}"
+      STDERR.puts "#{@count}) Movied Bender, current loc: #{@map.location_ahead_of_bender}"
       track_benders_path
     end
 
@@ -281,12 +283,7 @@ module FuturamaLand
       @breaker_mode = !@breaker_mode
     end
 
-    def toggle_teleport_mode
-      @teleport = !@teleport
-    end
-
     def handle_bender_inverted
-      STDERR.puts "#{@count}) Bender is inverted"
       @inverted = !@inverted
     end
 
@@ -301,6 +298,7 @@ module FuturamaLand
     def free_bender_ram_for_next_step
       @directions_tried = []
       @instant_change_direction = nil
+      @teleport = false
     end
 
     def bender_quote
@@ -375,43 +373,41 @@ module FuturamaLand
       end
     end
 
-    def move_bender_to_new_location
+    def move_bender_to_new_location()
       move_bender_on_map(@location_ahead_of_bender)
       @benders_location = @location_ahead_of_bender
-      STDERR.puts "@benders_ggocation: #{@benders_location}"
-      # @location_ahead_of_bender = nil
       STDERR.puts "@benders_location after: #{@benders_location}"
+    end
+
+    def locate_object_on_map(object)
+      location = nil
+      @rows.each_with_index do |row, row_index|
+        column_index = row.index(object)
+        location = { row_index: row_index, column_index: column_index } if column_index
+        # STDERR.puts "#{bender.count}) #{object} located at #{location}"
+        break if column_index
+      end
+      location
     end
 
     def locate_bender(bender)
       @bender = bender
-      @rows.each_with_index do |row, row_index|
-        column_index = row.index('@')
-        if column_index
-          location = { row_index: row_index, column_index: column_index }
-          @benders_location = location
-          # STDERR.puts "#{bender.count}) Bender located at #{@benders_location}"
-        end
-        break if column_index
-      end
+      location = locate_object_on_map('@')
+      @benders_location = location
+      # STDERR.puts "#{bender.count}) Bender located at #{@benders_location}"
     end
 
-    def find_other_teleporter
+    def locate_other_teleporter
       location = nil
       @rows.each_with_index do |row, row_index|
         column_index = row.index('T')
         if column_index
           found_location = { row_index: row_index, column_index: column_index }
-          location = found_location unless _location == found_location
+          location = found_location unless location == benders_location
         end
         break if location
       end
-      location
-    end
-
-    def teleport_bender
-      bender_location = find_other_teleporter
-      update_bender_on_map(bender_location)
+      @location_ahead_of_bender = location
     end
 
     def remove_smashed_object
@@ -421,6 +417,7 @@ module FuturamaLand
     def move_bender_on_map(new_location)
       old_object = @removed_object if @removed_object
       old_object ||= ' '
+
       new_object = view_map_object(new_location)
       update_map(benders_location, old_object)
       STDERR.puts("#{bender.count}) moving bender from")
@@ -429,7 +426,7 @@ module FuturamaLand
       STDERR.puts("#{bender.count}) #{new_location}")
       update_map(new_location, '@')
       @removed_object = new_object
-      display_map
+      # display_map
     end
 
     def object_in_front_of_bender
@@ -505,7 +502,7 @@ module FuturamaLand
       @map.locate_bender(@bender)
       #   @bender.showoff
 
-      @bender.wander_around until @bender.found_booth || @bender.stuck_in_loop
+      @bender.wander_around until (@bender.found_booth || @bender.stuck_in_loop)
       @bender.lonely_road.each { |lonely_step| puts lonely_step }
     end
   end
