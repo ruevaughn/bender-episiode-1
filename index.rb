@@ -58,17 +58,17 @@ module FuturamaLand
     # Since it gives it the 'adding on' feel which is described in the scenario
     module BenderProgrammableLogicFirmware
       def predict_direction
-        STDERR.puts "#{@count}) Finding new direction: @direction: #{@direction}"
-        STDERR.puts "#{@count}) Finding new direction: @directions_tried: #{@directions_tried}"
-        STDERR.puts "#{@count}) Finding new direction: @directions_tried.include?(@direction): #{@directions_tried.include?(@direction)}"
+        # STDERR.puts "#{@count}) Finding new direction: @direction: #{@direction}"
+        # STDERR.puts "#{@count}) Finding new direction: @directions_tried: #{@directions_tried}"
+        # STDERR.puts "#{@count}) Finding new direction: @directions_tried.include?(@direction): #{@directions_tried.include?(@direction)}"
         directions = get_directions
         if @directions_tried.include?(@direction)
           a = directions.find { |d| !@directions_tried.include?(d) }
-          STDERR.puts "#{@count}) Found #{a} instead of #{@direction}"
+          # STDERR.puts "#{@count}) Found #{a} instead of #{@direction}"
           a
         else
-          STDERR.puts "#{@count}) DID NOT Find new direction: @direction: #{@direction}"
-          STDERR.puts "#{@count}) DID NOT Find new direction: @directions_tried: #{@directions_tried}"
+          # STDERR.puts "#{@count}) DID NOT Find new direction: @direction: #{@direction}"
+          # STDERR.puts "#{@count}) DID NOT Find new direction: @directions_tried: #{@directions_tried}"
           @direction
         end
       end
@@ -142,34 +142,34 @@ module FuturamaLand
 
     def wander_around
       @count += 1
-      # @directions_tried = [1, 2, 3, 4, 5] if @count >= 16
-      STDERR.puts "#{@count}) Bender was facing #{@direction}"
+      # @directions_tried = [1, 2, 3, 4, 5] if @count >= 66
+      # STDERR.puts "#{@count}) Bender was facing #{@direction}"
       @direction = predict_direction
-      STDERR.puts "#{@count}) Bender is now facing #{@direction}"
-      STDERR.puts "#{@count}) Bender is at #{@map.benders_location}"
+      # STDERR.puts "#{@count}) Bender is now facing #{@direction}"
+      # STDERR.puts "#{@count}) Bender is at #{@map.benders_location}"
       loc = @map.get_benders_new_location(@direction)
-      STDERR.puts "#{@count}) Bender will be moving to #{loc}"
+      # STDERR.puts "#{@count}) Bender will be moving to #{loc}"
       @current_object = @map.object_in_front_of_bender
-      STDERR.puts "#{@count}) Benders is facing object #{decode_object @current_object}"
-      STDERR.puts "#{@count}) Can move to object: #{can_move_to_object?}"
+      # STDERR.puts "#{@count}) Benders is facing object #{decode_object @current_object}"
+      # STDERR.puts "#{@count}) Can move to object: #{can_move_to_object?}"
       if @directions_tried.size > 4
-        STDERR.puts "#{@count}) Directions tried: #{@directions_tried} #{@directions_tried.size}"
+        # STDERR.puts "#{@count}) Directions tried: #{@directions_tried} #{@directions_tried.size}"
         @stuck_in_loop = true
         @lonely_road << ['LOOP']
       elsif can_move_to_object?
-        STDERR.puts("#{@count}) About to interact with object: #{decode_object @current_object}")
+        # STDERR.puts("#{@count}) About to interact with object: #{decode_object @current_object}")
         # @map.display_map
         interact_with_object
-        STDERR.puts("#{@count}) About to Take Step #{decode_object @current_object}")
+        # STDERR.puts("#{@count}) About to Take Step #{decode_object @current_object}")
         if @teleport
-          STDERR.puts "#{@count}) Teleporting Bender"
+          # STDERR.puts "#{@count}) Teleporting Bender"
           teleport_bender_on_map
         else
-          STDERR.puts "#{@count}) Taking Sad Lonely Step"
+          # STDERR.puts "#{@count}) Taking Sad Lonely Step"
           take_sad_lonely_step
           @direction = @instant_change_direction.dup if @instant_change_direction
         end
-        STDERR.puts("#{@count}) Freeing Ram")
+        # STDERR.puts("#{@count}) Freeing Ram")
         free_bender_ram_for_next_step
       else
         # STDERR.puts("#{@count}) Adding #{@direction} to #{@directions_tried}")
@@ -190,16 +190,16 @@ module FuturamaLand
         true
       elsif breakable_object?
         if @breaker_mode == true
-          STDERR.puts "can smash! #{can_smash_object?} breaker mode: #{@breaker_mode}"
+          # STDERR.puts "can smash! #{can_smash_object?} breaker mode: #{@breaker_mode}"
           true
         else
-          STDERR.puts "cannot smash! #{!can_smash_object?} breaker mode: #{@breaker_mode}"
+          # STDERR.puts "cannot smash! #{!can_smash_object?} breaker mode: #{@breaker_mode}"
           false
         end
       elsif unbreakable_object?
         false
       else
-        STDERR.puts "#{@count}Allowed #{@current_object} to pass"
+        # STDERR.puts "#{@count}Allowed #{@current_object} to pass"
         true
       end
     end
@@ -239,28 +239,29 @@ module FuturamaLand
     end
 
     def teleport_bender_on_map
-      STDERR.puts "#{@count}) Teleporting to bender: Bender location before: #{@map.benders_location}"
+      # STDERR.puts "#{@count}) Teleporting to bender: Bender location before: #{@map.benders_location}"
       @map.locate_other_teleporter
       @map.move_bender_to_new_location
       track_benders_path
-      STDERR.puts "#{@count}) Done teleporting to bender: Bender location after: #{@map.benders_location}"
+      # STDERR.puts "#{@count}) Done teleporting to bender: Bender location after: #{@map.benders_location}"
     end
 
     def take_sad_lonely_step
-      STDERR.puts "#{@count}) Moving Bender, current loc: #{@map.benders_location}"
-      STDERR.puts "#{@count}) Moving Bender, current loc: #{@map.location_ahead_of_bender}"
+      # STDERR.puts "#{@count}) Moving Bender, current loc: #{@map.benders_location}"
+      # STDERR.puts "#{@count}) Moving Bender, current loc: #{@map.location_ahead_of_bender}"
       @map.move_bender_to_new_location
-      STDERR.puts "#{@count}) Moved Bender, current loc: #{@map.benders_location}"
-      STDERR.puts "#{@count}) Movied Bender, current loc: #{@map.location_ahead_of_bender}"
+      # STDERR.puts "#{@count}) Moved Bender, current loc: #{@map.benders_location}"
+      # STDERR.puts "#{@count}) Movied Bender, current loc: #{@map.location_ahead_of_bender}"
       track_benders_path
     end
 
     def track_benders_path
-      STDERR.puts "#{@count}) Tracking Bender, he is facing: #{@direction}"
-      STDERR.puts "#{@count}) Tracking Bender, he has been: #{@lonely_road}"
+      # STDERR.puts "#{@count}) Tracking Bender, he is facing: #{@direction}"
+      # STDERR.puts "#{@count}) Tracking Bender, he has been: #{@lonely_road}"
+      STDERR.puts "#{Bender} went #{@direction} over #{@current_object} and Breaker mode is #{@breaker_mode}"
       @lonely_road << @direction
-      STDERR.puts "#{@count}) Done tracking Bender, he is facing: #{@direction}"
-      STDERR.puts "#{@count}) Done tracking Bender, he has been: #{@lonely_road}"
+      # STDERR.puts "#{@count}) Done tracking Bender, he is facing: #{@direction}"
+      # STDERR.puts "#{@count}) Done tracking Bender, he has been: #{@lonely_road}"
     end
 
     def handle_path_modifier
@@ -353,11 +354,11 @@ module FuturamaLand
     end
 
     def get_benders_new_location(direction)
-      STDERR.puts "#{@bender.count}) Current Location: #{@benders_location}"
-      STDERR.puts "#{@bender.count}) Getting new loc from direction: #{direction}"
+      # STDERR.puts "#{@bender.count}) Current Location: #{@benders_location}"
+      # STDERR.puts "#{@bender.count}) Getting new loc from direction: #{direction}"
       # STDERR.puts "~~~~~~~#{COMPASS_ADVICE}~~~~~~~~~"
       row_or_column, new_direction = COMPASS_ADVICE[direction.to_sym]
-      STDERR.puts "row_or_column: #{row_or_column} new_direction: #{new_direction}"
+      # STDERR.puts "row_or_column: #{row_or_column} new_direction: #{new_direction}"
       current_location = @benders_location.dup
       if new_direction == :up
         current_location[row_or_column] += 1
@@ -376,7 +377,7 @@ module FuturamaLand
     def move_bender_to_new_location()
       move_bender_on_map(@location_ahead_of_bender)
       @benders_location = @location_ahead_of_bender
-      STDERR.puts "@benders_location after: #{@benders_location}"
+      # STDERR.puts "@benders_location after: #{@benders_location}"
     end
 
     def locate_object_on_map(object)
@@ -420,10 +421,10 @@ module FuturamaLand
 
       new_object = view_map_object(new_location)
       update_map(benders_location, old_object)
-      STDERR.puts("#{bender.count}) moving bender from")
-      STDERR.puts("#{bender.count}) #{benders_location}")
-      STDERR.puts("#{bender.count}) to")
-      STDERR.puts("#{bender.count}) #{new_location}")
+      # STDERR.puts("#{bender.count}) moving bender from")
+      # STDERR.puts("#{bender.count}) #{benders_location}")
+      # STDERR.puts("#{bender.count}) to")
+      # STDERR.puts("#{bender.count}) #{new_location}")
       update_map(new_location, '@')
       @removed_object = new_object
       # display_map
