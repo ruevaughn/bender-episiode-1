@@ -152,7 +152,7 @@ module FuturamaLand
 
     def wander_around
       @count += 1
-      # @directions_tried = [1, 2, 3, 4, 5] if @count >= 66
+      # @directions_tried = [1, 2, 3, 4, 5] if @count >= 200
       # STDERR.puts "#{@count}) Bender was facing #{@direction}"
       @direction = predict_direction
       # STDERR.puts "#{@count}) Bender is now facing #{@direction}"
@@ -162,16 +162,17 @@ module FuturamaLand
       @current_object = @map.object_in_front_of_bender
       if can_move_to_object?
         # STDERR.puts("#{@count}) About to interact with object: #{decode_object @current_object}")
-        @map.display_map
+        # @map.display_map
         interact_with_object
         # STDERR.puts("#{@count}) About to Take Step #{decode_object @current_object}")
-        if @teleport && !@teleported
+        if @teleport
           # STDERR.puts "#{@count}) Teleporting Bender"
+          # STDERR.puts "#{@count}) Teleporting to bender: Bender location before: #{@map.benders_location}"
           take_sad_lonely_step
           teleport_bender_on_map
           take_sad_lonely_step
           track_benders_path
-          @teleported = true
+          # STDERR.puts "#{@count}) Done teleporting to bender: Bender location after: #{@map.benders_location}"
         else
           # STDERR.puts "#{@count}) Taking Sad Lonely Step"
           take_sad_lonely_step
@@ -249,9 +250,9 @@ module FuturamaLand
     end
 
     def teleport_bender_on_map
-      # STDERR.puts "#{@count}) Teleporting to bender: Bender location before: #{@map.benders_location}"
+    #   STDERR.puts "#{@count}) Teleporting to bender: Bender location before: #{@map.benders_location}"
       @map.locate_other_teleporter
-      # STDERR.puts "#{@count}) Done teleporting to bender: Bender location after: #{@map.benders_location}"
+    #   STDERR.puts "#{@count}) Done teleporting to bender: Bender location after: #{@map.benders_location}"
     end
 
     def take_sad_lonely_step
@@ -263,9 +264,10 @@ module FuturamaLand
     end
 
     def track_benders_path
-      # STDERR.puts "#{@count}) Tracking Bender, he is facing: #{@direction}"
-      # STDERR.puts "#{@count}) Tracking Bender, he has been: #{@lonely_road}"
-      STDERR.puts "#{Bender} went #{@direction} over #{@current_object} and Breaker mode is #{@breaker_mode}"
+       STDERR.puts @direction
+    #   STDERR.puts "#{@count}) Tracking Bender, he is facing: #{@direction}"
+    #   STDERR.puts "#{@count}) Tracking Bender, he has been: #{@lonely_road}"
+    #   STDERR.puts "#{Bender} went #{@direction} over #{@current_object} and Breaker mode is #{@breaker_mode}"
       @lonely_road << @direction
       # STDERR.puts "#{@count}) Done tracking Bender, he is facing: #{@direction}"
       # STDERR.puts "#{@count}) Done tracking Bender, he has been: #{@lonely_road}"
