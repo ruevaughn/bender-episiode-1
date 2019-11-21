@@ -2,16 +2,20 @@
 
 ########################################################################
 #     =------------------------------------------------------=         #
-# A                  4 - Government issues Firmwar                     #
+#                    4 - Government issues Firmware                    #
 #             (which they genereoursly let the professor build         #
 #                           *ahem* *cough*                             #
 #  =------------------------------------------------------------=      #
-#           Keepts track of Benders locatifn, allows him to see        #                                                               #
-#              the objects just out of view, and make decsisiosn       #
+#           Keeps track of Benders location, allows him to see         #                                                               #
+#           the objects just out of view, and make decisions           #
+#            (Which of course helps us predict his actions)            #
+#            This way we don't have to give that witless Fry           #
+#            news his brain is incapable of handling, thus             #
+#             preventing an eposode on the matter.                     #
 #                                                                      #
 ########################################################################
 ########################################################################
-# =>                                                                <= #t
+# =>                  Chase Jensen - Built For Enzyme              <= ##
 ########################################################################
 
 # Welcome to Futurama!
@@ -56,7 +60,6 @@ module FuturamaLand
       def get_directions
         @inverted ? CompassLogicGates::INVERTED_DIRECTIONS_ABBR : CompassLogicGates::STANDARD_DIRECTIONS_ABBR
       end
-
     end
   end
 
@@ -244,21 +247,21 @@ module FuturamaLand
     end
 
     def wave_flag
-      STDERR.puts "¶i~~~~~~~~~~~~()" # I guess it's a crime to have colored flags these days.
+      STDERR.puts "()~~~~~~~~~~~~-+" # I guess it's a crime to have colored flags these days.
       STDERR.puts "¶|  FUTURAMA. ||" # .colorize(color: :red, background: :orange)
       STDERR.puts "¶|  (BENDER)  ||" # colorize(color: :grey)
       STDERR.puts "¶|  RULEZ!!!  ||" # colorize(color: :red, background: :orange)
-      STDERR.puts "¶|            ||"
-      STDERR.puts "¶+|~~~~~~~~~~~()"
+      STDERR.puts "¶|  EPISODE 1 ||"
+      STDERR.puts "¶|~~~~~~~~~~~~-+"
       STDERR.puts "¶|"
       STDERR.puts "¶|"
-      STDERR.puts "()"
+      STDERR.puts "~~~~"
     end
   end
 
   ########################################################################
   #     =------------------------------------------------------=         #
-  #                     2 - Map Class     b                              #
+  #                          2 - Map Class                               #
   #  =------------------------------------------------------------=      #
   #           Keepts track of Benders location, allows him to see        #                                                               #
   #              the objects just out of view, and make decsisiosn       #
