@@ -6,7 +6,7 @@
 #             (which they genereoursly let the professor build         #
 #                           *ahem* *cough*                             #
 #  =------------------------------------------------------------=      #
-#           Keeps track of Benders location, allows him to see         #                                                               #
+#           Keeps track of Benders location, allows him to see         #
 #           the objects just out of view, and make decisions           #
 #            (Which of course helps us predict his actions)            #
 #            This way we don't have to give that witless Fry           #
@@ -15,7 +15,7 @@
 #                                                                      #
 ########################################################################
 ########################################################################
-# =>                  Chase Jensen - Built For Enzyme              <= ##
+# =>        Chase Jensen -  Project For AllyDVM  =D                <= ##
 ########################################################################
 
 # Welcome to Futurama!
@@ -26,10 +26,10 @@ module FuturamaLand
   module NewBenderFirmware
     module CompassLogicGates
       COMPASS_ADVICE = {
-        north: [:column_index, :up],
-        east: [:row_index, :up],
-        south: [:row_index, :down],
-        west: [:column_index, :down]
+        NORTH: [:column_index, :down],
+        EAST: [:row_index, :up],
+        SOUTH: [:row_index, :up],
+        WEST: [:column_index, :down]
       }.freeze
 
       CARDINAL_DIRECTIONS = %w[NORTH EAST SOUTH WEST].freeze
@@ -50,8 +50,16 @@ module FuturamaLand
     # Since it gives it the 'adding on' feel which is described in the scenario
     module BenderProgrammableLogicFirmware
       def predict_direction
-        if @directions_tried.include(@direction)
-          @directions_tried.map { |d| !@direction_tried.include?(@direction) }.flatten.first
+        # STDERR.puts "@direction: #{@direction}"
+        # STDERR.puts "@directions_tried: #{@directions_tried}"
+        if @directions_tried.include?(@direction)
+          a = @directions_tried.map { |d| d unless @directions_tried.include?(@direction) }.flatten.first
+          STDERR.puts "AAAAAA"
+          STDERR.puts @directions_tried
+          STDERR.puts "AAAAAA"
+          STDERR.puts @direction
+          STDERR.puts "AAAAAA"
+          STDERR.puts a
         else
           @direction
         end
@@ -71,20 +79,21 @@ module FuturamaLand
 
   ########################################################################
   #     =------------------------------------------------------=         #
-  #                     2 - Big Man Bender Himself!                     #
+  #                     2 - Big Man Bender Himself!                      #
   #  =------------------------------------------------------------=      #
-  #           Keepts track of Benders location, allows him to see        #                                                               #
+  #           Keepts track of Benders location, allows him to see        #
   #              the objects just out of view, and make decsisiosn       #
   #                                                                      #
   ########################################################################
   ########################################################################
-  # =>                                                                <= #t
+  # =>                                                                <= #
   ########################################################################
 
-  # Bender - Beer, Women, Robots, Partying, Fry - These are just some of his favorite things
-  #          on his Hard Drive. Unfortunately things have gotten sour  for the little guy and
-  #          No one feels bad for him but himself. He's gotten to the point we have to intervene -
-  #          Little does he know he's about to get a firmware update
+  # Bender - Beer, Women, Robots, Partying, Fry - These are just some of his
+  #          favorite thing on his Hard Drive. Unfortunately things have gotten sour
+  #          for the little guy and No one feels bad for him but himself. He's gotten
+  #          to the point we have to intervene - Little does he know he's about to get
+  # a firmware update
   class Bender
     # Bender Modes
     attr_accessor :found_booth
@@ -113,14 +122,6 @@ module FuturamaLand
       @map = map
     end
 
-    def update_map_on_benders_direction(direction)
-      @map.inspect_location_in_direction(direction)
-    end
-
-    def update_map_on_benders_location
-      @map.update_benders_location
-    end
-
     def update_map_on_bender_smashin
       @map.remove_smashed_object
     end
@@ -131,9 +132,14 @@ module FuturamaLand
     end
 
     def wander_around
-      @direction = predict_direction until @direction
-      update_map_on_benders_direction(@direction)
-      @current_object = inspect_object_at_location
+      STDERR.puts "#{count}) Bender was facing #{@direction}"
+      @direction = predict_direction
+      STDERR.puts "#{count}) Bender is now #{@direction}"
+      STDERR.puts "#{count}) Bender is at #{@map.benders_location}"
+      loc = @map.get_benders_new_location(@direction)
+      STDERR.puts "#{count}) Bender will be at #{loc}"
+      @current_object = @map.object_in_front_of_bender
+      STDERR.puts "#{count}) Benders object is #{@current_object}"
       if @directions_tried.size > 4
         @stuck_in_loop = true
         @lonely_road << ['LOOP']
@@ -149,12 +155,8 @@ module FuturamaLand
 
     private
 
-    def inspect_object_at_location
-      @map.object_in_front_of_bender
-    end
-
     def can_move_to_object?
-      if is_empty_space?
+      if empty_space?
         true
       elsif can_smash_object?
         true
@@ -177,7 +179,9 @@ module FuturamaLand
       take_sad_lonely_step
     end
 
-    def is_empty_space?
+    def empty_space?
+      # STDERR.puts "empty_space: #{@current_object.to_s}"
+      # STDERR.puts "empty_space: #{@direction}"
       @current_object.match?(/\s{1}/)
     end
 
@@ -194,7 +198,7 @@ module FuturamaLand
         toggle_teleport
         @map.teleport_bender
       else
-        update_map_on_benders_location
+        @map.move_bender_to_new_location
       end
       track_benders_path
     end
@@ -290,9 +294,13 @@ module FuturamaLand
       @rows << row.split('')
     end
 
-    def inspect_location_in_direction(direction)
-      row_or_column, new_direction = COMPASS_ADVICE[direction]
-      current_location = @bender_location.dup
+    def get_benders_new_location(direction)
+      STDERR.puts "Benders Location:#{@benders_location}~~~~~~~~~"
+       STDERR.puts "~~~~~~~#{direction}~~~~~~~~~"
+      # STDERR.puts "~~~~~~~#{COMPASS_ADVICE}~~~~~~~~~"
+      row_or_column, new_direction = COMPASS_ADVICE[direction.to_sym]
+      # STDERR.puts "row_or_column: #{row_or_column} new_direction: #{new_direction}"
+      current_location = @benders_location.dup
       if new_direction == :up
         current_location[row_or_column] += 1
       elsif new_direction == :down
@@ -307,9 +315,11 @@ module FuturamaLand
       end
     end
 
-    def update_benders_location
+    def move_bender_to_new_location
       @benders_location = @location_ahead_of_bender.dup
+      # STDERR.puts "@benders_ggocation: #{@benders_location}"
       @location_ahead_of_bender = nil
+      # STDERR.puts "@benders_location after: #{@benders_location}"
     end
 
     def locate_bender(bender)
@@ -317,8 +327,8 @@ module FuturamaLand
         column_index = row.index('@')
         if column_index
           location = { row_index: row_index, column_index: column_index }
-          @bender_location = location
-          STDERR.puts "Bender located at #{@bender_location}"
+          @benders_location = location
+          STDERR.puts "Bender located at #{@benders_location}"
         end
         break if column_index
       end
@@ -339,14 +349,14 @@ module FuturamaLand
 
     def teleport_bender
       bender_location = find_other_teleporter
-      update_bender_on_map
+      update_bender_on_map(bender_location)
     end
 
     def remove_smashed_object
-      update_map(location_ahead_of_bender, ' ')
+      update_map(@location_ahead_of_bender, ' ')
     end
 
-    def move_bendeg_on_map(current_location)
+    def move_bender_on_map(current_location)
       update_map(current_location, '@')
     end
 
@@ -406,10 +416,10 @@ module FuturamaLand
     def self.save_bender
       # Write an action using puts
       # To debug: STDERR.puts "Debug messages..."
+    #   @map.display_map
       @map.locate_bender(@bender)
-      @bender.showoff
+    #   @bender.showoff
 
-      @looping = false
       @bender.wander_around until @bender.found_booth || @bender.stuck_in_loop
       @bender.lonely_road.each { |lonely_step| puts lonely_step }
     end
