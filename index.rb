@@ -57,10 +57,6 @@ module FuturamaLand
         @inverted ? CompassLogicGates::INVERTED_DIRECTIONS_ABBR : CompassLogicGates::STANDARD_DIRECTIONS_ABBR
       end
 
-      # def predict_move(object)
-      #   predict_bender_move(object)
-      #   predict_bender_interaction(object)
-      # end
     end
   end
 
@@ -104,7 +100,6 @@ module FuturamaLand
     include FuturamaLand::FirmwareUpdate
 
     def initialize(map)
-      @location = {}
       @direction = 'SOUTH'
       @directions_tried = []
       @found_booth = false
@@ -119,13 +114,18 @@ module FuturamaLand
       @map.inspect_location_in_direction(direction)
     end
 
+    def update_map_on_benders_location
+      @map.update_benders_location
+    end
+
+    def update_map_on_bender_smashin
+      @map.remove_smashed_object
+    end
+
     def showoff
       bender_quote
       wave_flag
     end
-
-    # Bender needs to get a location. It needs to be reliable.
-    # It needs to follow the conention. Never shoud it return wrong. ever.
 
     def wander_around
       @direction = predict_direction until @direction
@@ -134,10 +134,9 @@ module FuturamaLand
       if @directions_tried.size > 4
         @stuck_in_loop = true
         @lonely_road << ['LOOP']
-      elsif can_move_to_object?(@current_object)
+      elsif can_move_to_object?
+        interact_with_object
         move_to_object
-        @location = move_bender
-        update_bender_on_map
         cleanup_state
         finish_taking_lonely_step
       else
@@ -152,71 +151,80 @@ module FuturamaLand
       @map.object_in_front_of_bender
     end
 
-    def can_move_to_object?(object)
-      if is_empty_space?(object)
+    def can_move_to_object?
+      if is_empty_space?
         true
-      elsif can_smash_object?(object)
+      elsif can_smash_object?
         true
-      elsif unbreakable_object?(object)
+      elsif unbreakable_object?
         false
+      else
+        true
       end
     end
 
-    def move_to_object
+    def interact_with_object
       case @current_object
-      when /\s/ then handle_open_space
       when /(N|E|S|W)/i then handle_path_modifier
-      when /X/i then handle_bender_smashin if can_smash?
+      when /X/i then handle_bender_smashin
       when /\$/ then handle_bender_found_suicide_booth
       when /I/i then handle_bender_inverted
       when /T/i then handle_bender_teleport_mode
       when /B/i then handle_bender_rationalization
       end
+      take_sad_lonely_step
     end
 
-    def is_empty_space?(object)
-      object.match?(/\s{1}/)
+    def is_empty_space?
+      @current_object.match?(/\s{1}/)
     end
 
-    def handle_open_space
-      @location = @current_location
-    end
-
-    def unbreakable_object?(object)
+    def unbreakable_object?
       @current_object.match?(/#/)
     end
 
-    def can_smash_object?(object)
-      @breaker_mode && object.match?(/X/i) ? true : false
+    def can_smash_object?
+      @breaker_mode && @current_object.match?(/X/i) ? true : false
     end
 
-    def finish_taking_lonely_step
-      @direction = @current_direction
-      @lonely_road << @direction
-    end
-
-    def move_bender
+    def take_sad_lonely_step
       if @teleport
-        @location = @map.get_teleport_location(@current_location)
+        toggle_teleport
+        @map.teleport_bender
       else
-        @location = @current_location
+        update_map_on_benders_location
       end
+      track_benders_path
+    end
+
+    def track_benders_patb
+      @steps_taken << @direction
     end
 
     def handle_path_modifier
       @direction = PATH_MODIFIER_CHANGES[@current_object]
     end
 
-    def update_bender_on_map
+    def take_sad_lonely_step
+      @location =
       @map.move_bender_on_map(@location)
     end
 
     def handle_bender_rationalization
-      @breaker_mode = true
+      toggle_breaker_mode
     end
 
     def handle_bender_smashin
-      @map.bender_smash_obstacle(@current_location)
+      update_map_on_bender_smashin
+      toggle_braker_mode
+    end
+
+    def toggle_breaker_mode
+      @breaker_mode = !@breaker_mode
+    end
+
+    def toggle_teleport_mode
+      @teleport = !@teleport
     end
 
     def handle_bender_inverted
@@ -233,8 +241,6 @@ module FuturamaLand
 
     def cleanup_state
       @directions_tried = []
-      @breaker_mode = false
-      @teleport = false
     end
 
     def bender_quote
@@ -281,8 +287,6 @@ module FuturamaLand
 
     def initialize(attrs = {})
       @rows = []
-      @bender_location
-      @bender_next_location_attempt
     end
 
     def upload_to_map(row)
@@ -306,6 +310,11 @@ module FuturamaLand
       end
     end
 
+    def update_benders_location
+      @benders_location = @location_ahead_of_bender.dup
+      @location_ahead_of_bender = nil
+    end
+
     def locate_bender(bender)
       @rows.each_with_index do |row, row_index|
         column_index = row.index('@')
@@ -318,25 +327,30 @@ module FuturamaLand
       end
     end
 
-    def get_teleport_location(current_location)
+    def find_other_teleporter
       location = nil
       @rows.each_with_index do |row, row_index|
         column_index = row.index('T')
         if column_index
           found_location = { row_index: row_index, column_index: column_index }
-          location = found_location unless current_location == found_location
+          location = found_location unless _location == found_location
         end
         break if location
       end
       location
     end
 
-    def move_bender_on_map(current_location)
-      update_map(current_location, '@')
+    def teleport_bender
+      bender_location = find_other_teleporter
+      update_bender_on_map
     end
 
-    def bender_smash_gg(current_location)
-      update_map(current_location, ' ')
+    def remove_smashed_object
+      update_map(location_ahead_of_bender, ' ')
+    end
+
+    def move_bendegg_on_map(current_location)
+      update_map(current_location, '@')
     end
 
     def object_in_front_of_bender
