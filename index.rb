@@ -399,16 +399,15 @@ module FuturamaLand
     end
 
     def locate_other_teleporter
-      location = nil
+      found_location = nil
       @rows.each_with_index do |row, row_index|
         column_index = row.index('T')
         if column_index
-          found_location = { row_index: row_index, column_index: column_index }
-          location = found_location unless location == benders_location
+          location = { row_index: row_index, column_index: column_index }
+          found_location = location unless location == @benders_location
         end
-        break if location
       end
-      @location_ahead_of_bender = location
+      @location_ahead_of_bender = found_location
     end
 
     def remove_smashed_object
