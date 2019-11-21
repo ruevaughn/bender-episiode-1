@@ -274,7 +274,7 @@ module FuturamaLand
 
     def handle_bender_smashin
       if can_smash_object?
-        update_map_on_bender_smashin if can_smash_object?
+        update_map_on_bender_smashin
       else
         change_direction
       end
