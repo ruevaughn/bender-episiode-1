@@ -43,6 +43,14 @@ module FuturamaLand
 
       STANDARD_DIRECTIONS = { south: SOUTH, east: EAST, north: NORTH, west: WEST }.freeze
       INVERTED_DIRECTIONS = { west: WEST, north: NORTH, east: EAST, south: SOUTH }.freeze
+
+      def decode_object(object)
+        case object
+        when /\s+/ then "whitespace"
+        else
+          object
+        end
+      end
     end
 
     # These firmware updates are aware of the original 'Bender' prototype...
@@ -50,8 +58,9 @@ module FuturamaLand
     # Since it gives it the 'adding on' feel which is described in the scenario
     module BenderProgrammableLogicFirmware
       def predict_direction
-        # STDERR.puts "@direction: #{@direction}"
-        # STDERR.puts "@directions_tried: #{@directions_tried}"
+        STDERR.puts "***#{@count})***: @direction: #{@direction}"
+        STDERR.puts "***#{@count})***: @directions_tried: #{@directions_tried}"
+        STDERR.puts "***#{@count})***: @directions_tried.include?(@direction): #{@directions_tried.include?(@direction)}"
         if @directions_tried.include?(@direction)
           a = @directions_tried.map { |d| d unless @directions_tried.include?(@direction) }.flatten.first
           STDERR.puts "AAAAAA"
@@ -68,6 +77,7 @@ module FuturamaLand
       def get_directions
         @inverted ? CompassLogicGates::INVERTED_DIRECTIONS_ABBR : CompassLogicGates::STANDARD_DIRECTIONS_ABBR
       end
+
     end
   end
 
@@ -101,9 +111,9 @@ module FuturamaLand
     attr_accessor :inverted
 
     # Bender State
-    attr_accessor :direction
-    attr_accessor :directions_tried
-    attr_accessor :stuck_in_loop
+    attr_reader :direction
+    attr_reader :directions_tried
+    attr_reader :stuck_in_loop
     attr_reader :lonely_road
     attr_reader :count
 
@@ -133,33 +143,37 @@ module FuturamaLand
     end
 
     def wander_around
+      @count += 1
+      # @directions_tried = true if @count > 5
       STDERR.puts "#{@count}) Bender was facing #{@direction}"
       @direction = predict_direction
       STDERR.puts "#{@count}) Bender is now facing #{@direction}"
-      STDERR.puts "#{@count}) Bender is at #{@map.benders_location}"
+      # STDERR.puts "#{@count}) Bender is at #{@map.benders_location}"
       loc = @map.get_benders_new_location(@direction)
-      STDERR.puts "#{@count}) Bender will be moving tio #{loc}"
+      # STDERR.puts "#{@count}) Bender will be moving to #{loc}"
       @current_object = @map.object_in_front_of_bender
-      STDERR.puts "#{@count}) Benders object is facing object #{@current_object}"
-      STDERR.puts "Can move to object: #{can_move_to_object?}"
+      # STDERR.puts "#{@count}) Benders is facing object #{decode_object @current_object}"
+      # STDERR.puts "#{@count}) Can move to object: #{can_move_to_object?}"
       if @directions_tried.size > 4
         STDERR.puts "#{@count}) Directions tried: #{@directions_tried} #{@directions_tried.size}"
         @stuck_in_loop = true
         @lonely_road << ['LOOP']
       elsif can_move_to_object?
-        STDERR.puts("#{@count}) About to interact with object: #{@current_object}")
+        STDERR.puts("#{@count}) About to interact with object: #{decode_object @current_object}")
         interact_with_object
-        STDERR.puts("#{@count}) About to Take Step  #{@current_object}")
+        STDERR.puts("#{@count}) About to Take Step #{decode_object @current_object}")
         if @teleport
+          STDERR.puts "#{@count}) Teleporting Bender"
           teleport_bender
         else
+          STDERR.puts "#{@count}) Taking Sad Lonely Step"
           take_sad_lonely_step
         end
         STDERR.puts("#{@count}) Freeing Ram")
         free_ram_for_next_step
       else
         STDERR.puts("#{@count}) Adding #{@direction} to #{@directions_tried}")
-        @directions_tried << @current_direction
+        @directions_tried << @direction
         wander_around
       end
     end
@@ -179,7 +193,7 @@ module FuturamaLand
     end
 
     def interact_with_object
-      STDERR.puts("#{@count}) Interacting with object: #{@current_object}")
+      STDERR.puts("#{@count}) Interacting with object: #{decode_object @current_object}")
       case @current_object
       when /(N|E|S|W)/i then handle_path_modifier
       when /X/i then handle_bender_smashin
@@ -188,13 +202,13 @@ module FuturamaLand
       when /T/i then handle_bender_teleport_mode
       when /B/i then handle_bender_rationalization
       end
-      take_sad_lonely_step
     end
 
     def empty_space?
-      # STDERR.puts "empty_space: #{@current_object.to_s}"
-      # STDERR.puts "empty_space: #{@direction}"
-      @current_object.match?(/\s{1}/)
+      STDERR.puts "#{@count}) empty_space object: #{decode_object @current_object}"
+      STDERR.puts "#{@count}) empty_space direction: #{@direction}"
+      STDERR.puts "#{@count}) empty_space regex: #{@current_object.match(/\s{1}/)}"
+      @current_object.match(/\s{1}/)
     end
 
     def unbreakable_object?
@@ -213,16 +227,20 @@ module FuturamaLand
     end
 
     def take_sad_lonely_step
-      if @teleport
-        teleport_bender
-      else
-        @map.move_bender_to_new_location
-      end
+      STDERR.puts "#{@count}) Moving Bender, current loc: #{@map.benders_location}"
+      STDERR.puts "#{@count}) Moving Bender, current loc: #{@map.location_ahead_of_bender}"
+      @map.move_bender_to_new_location
+      STDERR.puts "#{@count}) Moved Bender, current loc: #{@map.benders_location}"
+      STDERR.puts "#{@count}) Movied Bender, current loc: #{@map.location_ahead_of_bender}"
       track_benders_path
     end
 
     def track_benders_path
+      STDERR.puts "#{@count}) Tracking Bender, he is facing: #{@direction}"
+      STDERR.puts "#{@count}) Tracking Bender, he has been: #{@lonely_road}"
       @lonely_road << @direction
+      STDERR.puts "#{@count}) Done tracking Bender, he is facing: #{@direction}"
+      STDERR.puts "#{@count}) Done tracking Bender, he has been: #{@lonely_road}"
     end
 
     def handle_path_modifier
@@ -347,7 +365,7 @@ module FuturamaLand
         if column_index
           location = { row_index: row_index, column_index: column_index }
           @benders_location = location
-          STDERR.puts "INIT) Bender located at #{@benders_location}"
+          STDERR.puts "#{bender.count}) Bender located at #{@benders_location}"
         end
         break if column_index
       end
@@ -380,8 +398,11 @@ module FuturamaLand
     end
 
     def object_in_front_of_bender
+      STDERR.puts("#{bender.count}) location in front of bender: #{@location_ahead_of_bender}")
       object = view_map_object(@location_ahead_of_bender)
+      STDERR.puts("#{bender.count}) object found in front of bender: #{decode_object object}")
       @object_ahead_of_bender = object
+      STDERR.puts("#{bender.count}) object set in front of bender: #{decode_object @object_ahead_of_bender}")
       object
     end
 
@@ -392,7 +413,13 @@ module FuturamaLand
     end
 
     def view_map_object(location)
-      @rows[location[:row_index]][location[:column_index]]
+      STDERR.puts("#{bender.count}) Viewing object at location: #{location}")
+      STDERR.puts("#{bender.count}) Rows is: #{@rows}")
+      STDERR.puts("#{bender.count}) row_index is : #{location[:row_index]}")
+      STDERR.puts("#{bender.count}) column_index is : #{location[:column_index]}")
+      object = @rows[location[:row_index]][location[:column_index]]
+      STDERR.puts("#{bender.count}) object found at location: #{object}")
+      object
     end
   end
 

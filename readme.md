@@ -1,7 +1,8 @@
 # Chase Jensen
-## Bender Episode 1 for Enzyme
 
-```
+## Bender Episode 1 for AllyDVM
+
+```txt
 > (1) While Not At Booth < - - - - - - - - - - - - |
 >          |                                       |
 >          V                                       |
@@ -28,8 +29,8 @@
 >        DONE
 ```
 
-```
- Bender was facing SOUTH
+```txt
+INIT) Bender was facing SOUTH
 0) Bender is now facing SOUTH
 0) Bender is at {:row_index=>1, :column_index=>1}
 0) Current Location: {:row_index=>1, :column_index=>1}
@@ -46,4 +47,16 @@ Can move to object: true
 0) Bender is at
 0) Current Location:
 0) Getting new loc from direction: SOUTH
+```
+
+### Map 1
+
+```ruby
+map = [
+  ["#", "#", "#", "#", "#"],
+  ["#", "@", " ", " ", "#"],
+  ["#", " ", " ", " ", "#"],
+  ["#", " ", " ", "$", "#"],
+  ["#", "#", "#", "#", "#"]
+]
 ```
