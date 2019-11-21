@@ -296,7 +296,7 @@ module FuturamaLand
 
     def get_benders_new_location(direction)
       STDERR.puts "Benders Location:#{@benders_location}~~~~~~~~~"
-       STDERR.puts "~~~~~~~#{direction}~~~~~~~~~"
+      STDERR.puts "~~~~~~~#{direction}~~~~~~~~~"
       # STDERR.puts "~~~~~~~#{COMPASS_ADVICE}~~~~~~~~~"
       row_or_column, new_direction = COMPASS_ADVICE[direction.to_sym]
       # STDERR.puts "row_or_column: #{row_or_column} new_direction: #{new_direction}"
@@ -416,9 +416,9 @@ module FuturamaLand
     def self.save_bender
       # Write an action using puts
       # To debug: STDERR.puts "Debug messages..."
-    #   @map.display_map
+      #   @map.display_map
       @map.locate_bender(@bender)
-    #   @bender.showoff
+      #   @bender.showoff
 
       @bender.wander_around until @bender.found_booth || @bender.stuck_in_loop
       @bender.lonely_road.each { |lonely_step| puts lonely_step }
