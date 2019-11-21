@@ -104,7 +104,8 @@ module FuturamaLand
     attr_accessor :direction
     attr_accessor :directions_tried
     attr_accessor :stuck_in_loop
-    attr_accessor :lonely_road
+    attr_reader :lonely_road
+    attr_reader :count
 
     # Bender Object Associations
     attr_accessor :map
@@ -312,8 +313,8 @@ module FuturamaLand
     end
 
     def get_benders_new_location(direction)
-      STDERR.puts "#{bender.count}) Current Location: #{@benders_location}"
-      STDERR.puts "#{bender.count}) Getting new loc from direction: #{direction}"
+      STDERR.puts "#{@bender.count}) Current Location: #{@benders_location}"
+      STDERR.puts "#{@bender.count}) Getting new loc from direction: #{direction}"
       # STDERR.puts "~~~~~~~#{COMPASS_ADVICE}~~~~~~~~~"
       row_or_column, new_direction = COMPASS_ADVICE[direction.to_sym]
       # STDERR.puts "row_or_column: #{row_or_column} new_direction: #{new_direction}"
@@ -340,12 +341,13 @@ module FuturamaLand
     end
 
     def locate_bender(bender)
+      @bender = bender
       @rows.each_with_index do |row, row_index|
         column_index = row.index('@')
         if column_index
           location = { row_index: row_index, column_index: column_index }
           @benders_location = location
-          STDERR.puts "Bender located at #{@benders_location}"
+          STDERR.puts "INIT) Bender located at #{@benders_location}"
         end
         break if column_index
       end

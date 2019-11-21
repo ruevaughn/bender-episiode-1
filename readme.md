@@ -27,3 +27,23 @@
 >          V
 >        DONE
 ```
+
+```
+ Bender was facing SOUTH
+0) Bender is now facing SOUTH
+0) Bender is at {:row_index=>1, :column_index=>1}
+0) Current Location: {:row_index=>1, :column_index=>1}
+0) Getting new loc from direction: SOUTH
+0) Bender will be moving tio {:row_index=>2, :column_index=>1}
+0) Benders object is facing object
+Can move to object: true
+0) About to interact with object:
+0) Interacting with object:
+0) About to Take Step
+0) Freeing Ram
+0) Bender was facing SOUTH
+0) Bender is now facing SOUTH
+0) Bender is at
+0) Current Location:
+0) Getting new loc from direction: SOUTH
+```
