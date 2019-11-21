@@ -74,7 +74,7 @@ module FuturamaLand
       end
 
       def get_directions
-        @inverted ? CompassLogicGates::INVERTED_DIRECTIONS : CompassLogicGates::STANDARD_DIRECTIONS
+        @inverted && @obstacle_encountered ? CompassLogicGates::INVERTED_DIRECTIONS : CompassLogicGates::STANDARD_DIRECTIONS
       end
     end
   end
@@ -142,7 +142,7 @@ module FuturamaLand
 
     def wander_around
       @count += 1
-      # @directions_tried = [1, 2, 3, 4, 5] if @count >= 6
+      #   @directions_tried = [1, 2, 3, 4, 5] if @count >= 7
       STDERR.puts "#{@count}) Bender was facing #{@direction}"
       @direction = predict_direction
       STDERR.puts "#{@count}) Bender is now facing #{@direction}"
@@ -172,6 +172,7 @@ module FuturamaLand
         free_bender_ram_for_next_step
       else
         # STDERR.puts("#{@count}) Adding #{@direction} to #{@directions_tried}")
+        @obstacle_encountered = true
         change_direction
       end
     end
@@ -237,10 +238,10 @@ module FuturamaLand
     end
 
     def teleport_bender
-      # STDERR.puts "#{@count}) Teleporting to bender: Bender location before: #{@map.bender_location}"
+      # STDERR.puts "#{@count}) Teleporting to bender: Bender location before: #{@map.benders_location}"
       toggle_teleport
       @map.teleport_bender
-      # STDERR.puts "#{@count}) Done teleporting to bender: Bender location after: #{@map.bender_location}"
+      # STDERR.puts "#{@count}) Done teleporting to bender: Bender location after: #{@map.benders_location}"
     end
 
     def take_sad_lonely_step
@@ -285,7 +286,8 @@ module FuturamaLand
     end
 
     def handle_bender_inverted
-      @inverted = true
+      STDERR.puts "#{@count}) Bender is inverted"
+      @inverted = !@inverted
     end
 
     def handle_bender_teleport_mode
@@ -340,6 +342,7 @@ module FuturamaLand
     attr_reader :benders_location
     attr_reader :location_ahead_of_bender
     attr_reader :object_ahead_of_bender
+    attr_reader :removed_object
 
     include FuturamaLand::NewBenderFirmware::CompassLogicGates
 
@@ -368,11 +371,12 @@ module FuturamaLand
 
     def display_map
       @rows.each do |row|
-        STDERR.print row
+        STDERR.puts row.join('')
       end
     end
 
     def move_bender_to_new_location
+      move_bender_on_map(@location_ahead_of_bender)
       @benders_location = @location_ahead_of_bender
       STDERR.puts "@benders_ggocation: #{@benders_location}"
       # @location_ahead_of_bender = nil
@@ -414,8 +418,18 @@ module FuturamaLand
       update_map(@location_ahead_of_bender, ' ')
     end
 
-    def move_bender_on_map(current_location)
-      update_map(current_location, '@')
+    def move_bender_on_map(new_location)
+      old_object = @removed_object if @removed_object
+      old_object ||= ' '
+      new_object = view_map_object(new_location)
+      update_map(benders_location, old_object)
+      STDERR.puts("#{bender.count}) moving bender from")
+      STDERR.puts("#{bender.count}) #{benders_location}")
+      STDERR.puts("#{bender.count}) to")
+      STDERR.puts("#{bender.count}) #{new_location}")
+      update_map(new_location, '@')
+      @removed_object = new_object
+      display_map
     end
 
     def object_in_front_of_bender
@@ -431,6 +445,10 @@ module FuturamaLand
 
     def update_map(location, symbol)
       @rows[location[:row_index]][location[:column_index]] = symbol
+      # @rows.each_with_index do |row, row_i|
+      #   row[location[:column_index]] = symbol if location[:row_index] == row_i
+      #   break if location[:row_index] == row_i
+      # end
     end
 
     def view_map_object(location)
