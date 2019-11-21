@@ -140,9 +140,19 @@ module FuturamaLand
       wave_flag
     end
 
+    def check_if_benders_lost
+      mark_looping if @count >= 300
+      mark_looping if @directions_tried.size > 4
+    end
+
+    def mark_looping
+      @stuck_in_loop = true
+      @lonely_road = ['LOOP']
+    end
+
     def wander_around
       @count += 1
-      @directions_tried = [1, 2, 3, 4, 5] if @count >= 66
+      # @directions_tried = [1, 2, 3, 4, 5] if @count >= 66
       # STDERR.puts "#{@count}) Bender was facing #{@direction}"
       @direction = predict_direction
       # STDERR.puts "#{@count}) Bender is now facing #{@direction}"
@@ -150,23 +160,18 @@ module FuturamaLand
       loc = @map.get_benders_new_location(@direction)
       # STDERR.puts "#{@count}) Bender will be moving to #{loc}"
       @current_object = @map.object_in_front_of_bender
-      # STDERR.puts "#{@count}) Benders is facing object #{decode_object @current_object}"
-      # STDERR.puts "#{@count}) Can move to object: #{can_move_to_object?}"
-      if @directions_tried.size > 4
-        # STDERR.puts "#{@count}) Directions tried: #{@directions_tried} #{@directions_tried.size}"
-        @stuck_in_loop = true
-        @lonely_road << ['LOOP']
-      elsif can_move_to_object?
+      if can_move_to_object?
         # STDERR.puts("#{@count}) About to interact with object: #{decode_object @current_object}")
         @map.display_map
         interact_with_object
         # STDERR.puts("#{@count}) About to Take Step #{decode_object @current_object}")
-        if @teleport
+        if @teleport && !@teleported
           # STDERR.puts "#{@count}) Teleporting Bender"
           take_sad_lonely_step
           teleport_bender_on_map
           take_sad_lonely_step
           track_benders_path
+          @teleported = true
         else
           # STDERR.puts "#{@count}) Taking Sad Lonely Step"
           take_sad_lonely_step
@@ -174,12 +179,13 @@ module FuturamaLand
           @direction = @instant_change_direction.dup if @instant_change_direction
         end
         # STDERR.puts("#{@count}) Freeing Ram")
-        free_bender_ram_for_next_step
       else
         # STDERR.puts("#{@count}) Adding #{@direction} to #{@directions_tried}")
         @obstacle_encountered = true
         change_direction
       end
+      check_if_benders_lost
+      free_bender_ram_for_next_step
     end
 
     private
